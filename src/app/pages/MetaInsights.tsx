@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ImagePlus, RefreshCw, X } from "lucide-react";
 import { toast } from "sonner";
+import { useTheme } from "next-themes";
 import { apiStatus, goals, metaPeriods, teamMembers } from "../data/mockData";
 import { createStorageKey, useSharedState } from "../data/sharedState";
 import {
@@ -20,6 +21,8 @@ type GoalImages = Record<number, string[]>;
 
 export function MetaInsightsPage() {
   const [period, setPeriod] = useState<(typeof metaPeriods)[number]>("Mês");
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
   const [items, setItems] = useSharedState(createStorageKey("meta-goals"), goals);
   const [goalImages, setGoalImages] = useSharedState<GoalImages>(createStorageKey("goal-images"), {});
   const [activeGoalId, setActiveGoalId] = useState<number | null>(null);
@@ -133,7 +136,9 @@ export function MetaInsightsPage() {
           const progress = (goal.current / goal.target) * 100;
           const healthy = progress >= 100;
           const caution = progress >= 70 && progress < 100;
-          const cardTint = `linear-gradient(180deg, rgba(255,255,255,0.98), ${member.color}08)`;
+          const cardTint = isDark
+            ? `linear-gradient(180deg, rgba(24,24,26,0.98), ${member.color}12)`
+            : `linear-gradient(180deg, rgba(255,255,255,0.98), ${member.color}08)`;
           const images = goalImages[goal.id] ?? [];
 
           return (
@@ -204,7 +209,7 @@ export function MetaInsightsPage() {
                   <button
                     type="button"
                     onClick={() => handlePickImages(goal.id)}
-                    className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-white px-3 py-2 text-xs font-semibold text-foreground transition hover:bg-muted"
+                    className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-white px-3 py-2 text-xs font-semibold text-foreground transition hover:bg-muted dark:bg-card dark:hover:bg-muted/80"
                   >
                     <ImagePlus className="h-3.5 w-3.5" />
                     Adicionar imagem

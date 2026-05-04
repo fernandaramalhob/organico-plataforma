@@ -1,5 +1,6 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { Clock3, Lightbulb, TrendingDown, TrendingUp, Zap } from "lucide-react";
+import { useTheme } from "next-themes";
 import { contentDistribution, insights } from "../data/mockData";
 import { GlassPanel, PageHeader, PageTransition, SectionTitle } from "../components/ui";
 
@@ -46,6 +47,9 @@ const cards = [
 ];
 
 export function InsightsPage() {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+
   return (
     <PageTransition>
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 pb-8 sm:px-6 lg:px-8">
@@ -63,13 +67,14 @@ export function InsightsPage() {
               <GlassPanel
                 key={card.title}
                 index={index + 1}
-                className="h-full overflow-hidden border-border/60 p-6"
-                style={{
-                  background:
-                    "linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(250,250,250,0.94) 100%)",
+              className="h-full overflow-hidden border-border/60 p-6"
+              style={{
+                  background: isDark
+                    ? "linear-gradient(180deg, rgba(24,24,26,0.98) 0%, rgba(16,16,18,0.96) 100%)"
+                    : "linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(250,250,250,0.94) 100%)",
                   borderColor: `${card.color}20`,
                   boxShadow: `0 16px 32px ${card.color}10`,
-                }}
+              }}
               >
                 <div className="flex h-full flex-col justify-between gap-6">
                   <div className="space-y-4">
@@ -113,7 +118,14 @@ export function InsightsPage() {
             </div>
 
             <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-center">
-              <div className="relative flex min-h-[360px] items-center justify-center rounded-[2rem] border border-border/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(250,250,250,0.92))] p-4">
+              <div
+                className="relative flex min-h-[360px] items-center justify-center rounded-[2rem] border border-border/60 p-4"
+                style={{
+                  background: isDark
+                    ? "linear-gradient(180deg, rgba(24,24,26,0.98), rgba(16,16,18,0.95))"
+                    : "linear-gradient(180deg,rgba(255,255,255,0.95),rgba(250,250,250,0.92))",
+                }}
+              >
                 <div className="absolute inset-4 rounded-[2rem] border border-dashed border-border/40" />
                 <div className="relative h-[320px] w-full max-w-[440px]">
                   <ResponsiveContainer width="100%" height="100%">
@@ -144,7 +156,7 @@ export function InsightsPage() {
                   </ResponsiveContainer>
 
                   <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                    <div className="rounded-full border border-border/60 bg-white/92 px-5 py-3 text-center shadow-[0_12px_30px_rgba(15,23,42,0.08)]">
+                    <div className="rounded-full border border-border/60 bg-card/92 px-5 py-3 text-center shadow-[0_12px_30px_rgba(15,23,42,0.08)]">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Volume total</p>
                       <p className="mt-1 text-2xl font-semibold tracking-tight text-foreground">100%</p>
                     </div>
@@ -156,7 +168,7 @@ export function InsightsPage() {
                 {contentDistribution.map((item) => (
                   <div
                     key={item.name}
-                    className="rounded-[1.5rem] border border-border/60 bg-white p-4 shadow-[0_12px_30px_rgba(15,23,42,0.05)]"
+                    className="rounded-[1.5rem] border border-border/60 bg-card p-4 shadow-[0_12px_30px_rgba(15,23,42,0.05)]"
                     style={{ borderLeftColor: item.color, borderLeftWidth: 4 }}
                   >
                     <div className="flex items-start justify-between gap-3">
@@ -185,8 +197,9 @@ export function InsightsPage() {
             index={6}
             className="overflow-hidden border-rose-200/70 p-6"
             style={{
-              background:
-                "linear-gradient(180deg, rgba(253,236,236,0.98) 0%, rgba(255,255,255,0.98) 38%, rgba(255,245,245,0.96) 100%)",
+              background: isDark
+                ? "linear-gradient(180deg, rgba(28,18,20,0.98) 0%, rgba(20,16,18,0.98) 100%)"
+                : "linear-gradient(180deg, rgba(253,236,236,0.98) 0%, rgba(255,255,255,0.98) 38%, rgba(255,245,245,0.96) 100%)",
               boxShadow: "0 20px 40px rgba(229,9,20,0.10)",
             }}
           >
@@ -199,7 +212,7 @@ export function InsightsPage() {
               {insights.recommendations.map((item, index) => (
                 <div
                   key={item}
-                  className="flex items-start gap-3 rounded-[1.5rem] border border-rose-100 bg-white/95 p-4 shadow-[0_10px_24px_rgba(15,23,42,0.04)]"
+                  className="flex items-start gap-3 rounded-[1.5rem] border border-rose-100 bg-card/95 p-4 shadow-[0_10px_24px_rgba(15,23,42,0.04)]"
                 >
                   <div
                     className="mt-0.5 inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-rose-200 bg-rose-50 text-rose-600"

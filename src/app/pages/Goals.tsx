@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Calendar, Plus, Target, X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { toast } from "sonner";
+import { useTheme } from "next-themes";
 import { goals, teamMembers } from "../data/mockData";
 import { createStorageKey, useSharedState } from "../data/sharedState";
 import {
@@ -30,6 +31,8 @@ function GoalProgressBar({ value, max, color }: { value: number; max: number; co
 }
 
 export function GoalsPage() {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
   const [items, setItems] = useSharedState(createStorageKey("goals"), goals);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<{ goalId: number; goalName: string } | null>(null);
@@ -43,6 +46,8 @@ export function GoalsPage() {
     deadline: "",
     responsibleId: teamMembers[0].id,
   });
+
+  const formatValue = (value: number) => new Intl.NumberFormat("pt-BR").format(value);
 
   useEffect(() => {
     if (!isCreateOpen) {
@@ -142,15 +147,17 @@ export function GoalsPage() {
             const member = teamMembers.find((item) => item.id === goal.responsibleId)!;
             const progress = (goal.current / goal.target) * 100;
             const remaining = Math.max(goal.target - goal.current, 0);
-            const statusText = progress >= 100 ? "Meta atingida" : `Faltam ${remaining.toFixed(goal.target > 100 ? 0 : 1)} para concluir`;
+            const statusText = progress >= 100 ? "Meta atingida" : `Faltam ${formatValue(remaining)} para concluir`;
 
             return (
               <GlassPanel
                 key={goal.id}
-              index={index + 1}
-                className="group relative h-full overflow-hidden p-5"
+                index={index + 1}
+                className="group relative h-full overflow-hidden p-6"
                 style={{
-                  background: "linear-gradient(180deg, rgba(255,255,255,0.99), rgba(250,250,250,0.96))",
+                  background: isDark
+                    ? "linear-gradient(180deg, rgba(24,24,26,0.98), rgba(16,16,18,0.96))"
+                    : "linear-gradient(180deg, rgba(255,255,255,0.99), rgba(250,250,250,0.96))",
                   borderColor: `${member.color}22`,
                   boxShadow: `0 14px 28px ${member.color}0d`,
                   borderLeftWidth: "4px",
@@ -160,70 +167,49 @@ export function GoalsPage() {
                 <div className="absolute right-4 top-4 z-10 opacity-0 transition group-hover:opacity-100">
                   <DeleteIconButton onClick={() => setPendingDelete({ goalId: goal.id, goalName: goal.name })} />
                 </div>
-                <div className="flex h-full flex-col gap-5">
+                <div className="flex h-full flex-col gap-6">
                   <div className="flex items-start justify-between gap-4">
-                    <div className="flex min-w-0 items-start gap-3">
-                      <div
-                        className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border"
-                        style={{
-                          backgroundColor: `${member.color}10`,
-                          borderColor: `${member.color}22`,
-                          color: member.color,
-                        }}
-                      >
-                        <Target className="h-5 w-5" />
+                    <div className="min-w-0 space-y-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h2 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">{goal.name}</h2>
+                        <span
+                          className="rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em]"
+                          style={{
+                            backgroundColor: `${member.color}12`,
+                            color: member.color,
+                          }}
+                        >
+                          {goal.category}
+                        </span>
                       </div>
-
-                      <div className="min-w-0 space-y-2">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h2 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">{goal.name}</h2>
-                          <span
-                            className="rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em]"
-                            style={{
-                              backgroundColor: `${member.color}12`,
-                              color: member.color,
-                            }}
-                          >
-                            {goal.category}
-                          </span>
-                        </div>
-                      </div>
+                      <MemberChip name={member.name} role={member.role} color={member.color} />
                     </div>
-
-                    <MemberChip name={member.name} role={member.role} color={member.color} />
                   </div>
 
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="rounded-2xl border border-border/60 bg-muted/30 px-3 py-3">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Meta</p>
-                      <p className="mt-2 text-base font-semibold tracking-tight text-foreground">{goal.target}</p>
+                  <div className="flex items-end justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Atual</p>
+                      <p className="mt-1 text-4xl font-semibold tracking-tight text-foreground">
+                        {formatValue(goal.current)}
+                      </p>
+                      <p className="mt-1 text-sm text-muted-foreground">de {formatValue(goal.target)}</p>
                     </div>
-                    <div className="rounded-2xl border border-border/60 bg-muted/30 px-3 py-3">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Atual</p>
-                      <p className="mt-2 text-base font-semibold tracking-tight text-foreground">{goal.current}</p>
-                    </div>
-                    <div className="rounded-2xl border border-border/60 bg-muted/30 px-3 py-3">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Progresso</p>
-                      <p className="mt-2 text-base font-semibold tracking-tight text-foreground">{progress.toFixed(0)}%</p>
+                    <div
+                      className="rounded-full px-3 py-1.5 text-sm font-semibold"
+                      style={{
+                        backgroundColor: progress >= 100 ? `${member.color}12` : `${member.color}08`,
+                        color: member.color,
+                      }}
+                    >
+                      {progress.toFixed(0)}%
                     </div>
                   </div>
 
                   <div className="space-y-3">
                     <GoalProgressBar value={goal.current} max={goal.target} color={member.color} />
-                    <div className="flex items-center justify-between gap-3">
-                      <span
-                        className="rounded-full px-3 py-1 text-xs font-semibold"
-                        style={{
-                          backgroundColor: progress >= 100 ? `${member.color}12` : `${member.color}08`,
-                          color: member.color,
-                        }}
-                      >
-                        {statusText}
-                      </span>
-                      <span className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Calendar className="h-4 w-4" />
-                        <span>{goal.period}</span>
-                      </span>
+                    <div className="flex items-center justify-between gap-3 text-sm">
+                      <span className="font-medium text-foreground">{statusText}</span>
+                      <span className="text-muted-foreground">{goal.period}</span>
                     </div>
                   </div>
                 </div>

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { CalendarClock, ChevronDown, SlidersHorizontal, Target, FileText } from "lucide-react";
+import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import { historyTimeline, teamMembers } from "../data/mockData";
 import { createStorageKey, useSharedState } from "../data/sharedState";
@@ -116,6 +117,8 @@ function FilterDropdown<T extends string | number>({
 }
 
 export function HistoryPage() {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
   const [itemsState, setItemsState] = useSharedState(createStorageKey("history"), historyTimeline);
   const [view, setView] = useState<"Timeline" | "Tabela">("Timeline");
   const [personFilter, setPersonFilter] = useState<number | "todos">("todos");
@@ -175,8 +178,13 @@ export function HistoryPage() {
       />
 
       <GlassPanel index={1} className="relative z-30 overflow-visible">
-        <div className="flex flex-col gap-4 rounded-[2rem] border border-border/60 bg-card/95 p-4 shadow-[var(--shadow-card)] lg:flex-row lg:items-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background px-4 py-2.5 text-sm font-medium text-muted-foreground shadow-sm">
+        <div
+          className="flex flex-col gap-4 rounded-[2rem] border border-border/60 p-4 shadow-[var(--shadow-card)] lg:flex-row lg:items-center"
+          style={{
+            backgroundColor: isDark ? "rgb(var(--card) / 0.96)" : "rgb(var(--card) / 0.95)",
+          }}
+        >
+          <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background px-4 py-2.5 text-sm font-medium text-muted-foreground shadow-sm dark:bg-card/80">
             <SlidersHorizontal className="h-4 w-4" />
             Filtros
           </div>
@@ -236,7 +244,9 @@ export function HistoryPage() {
                 index={index + 2}
                 className="group relative"
                 style={{
-                  background: "linear-gradient(180deg, rgba(255,255,255,0.99), rgba(249,249,251,0.96))",
+                  background: isDark
+                    ? "linear-gradient(180deg, rgba(24,24,26,0.98), rgba(16,16,18,0.96))"
+                    : "linear-gradient(180deg, rgba(255,255,255,0.99), rgba(249,249,251,0.96))",
                   borderColor: `${member.color}28`,
                   boxShadow: `0 18px 36px ${member.color}10`,
                   borderLeftWidth: "4px",
@@ -302,7 +312,7 @@ export function HistoryPage() {
                 {items.map((item) => {
                   const member = teamMembers.find((person) => person.id === item.authorId)!;
 
-                  return (
+                    return (
                     <tr key={item.id} className="border-t border-border/60">
                       <td className="px-5 py-4">
                         <p className="font-medium text-foreground">{item.title}</p>

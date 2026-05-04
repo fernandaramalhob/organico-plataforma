@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import { Link } from "react-router-dom";
+import { useTheme } from "next-themes";
 import {
   Area,
   AreaChart,
@@ -31,7 +32,7 @@ import {
 
 const metricIcons = [Eye, BarChart3, Sparkles, Rocket];
 
-const instagramTheme = {
+const instagramThemeLight = {
   ["--primary" as never]: "131 58 180",
   ["--primary-foreground" as never]: "255 255 255",
   ["--background" as never]: "249 249 251",
@@ -43,6 +44,20 @@ const instagramTheme = {
   ["--border" as never]: "229 231 238",
   ["--ring" as never]: "131 58 180",
   ["--shadow" as never]: "131 58 180",
+} as CSSProperties;
+
+const instagramThemeDark = {
+  ["--primary" as never]: "255 99 132",
+  ["--primary-foreground" as never]: "255 255 255",
+  ["--background" as never]: "10 10 12",
+  ["--foreground" as never]: "245 245 247",
+  ["--card" as never]: "22 22 25",
+  ["--card-foreground" as never]: "245 245 247",
+  ["--muted" as never]: "40 40 44",
+  ["--muted-foreground" as never]: "176 176 180",
+  ["--border" as never]: "58 58 60",
+  ["--ring" as never]: "255 99 132",
+  ["--shadow" as never]: "0 0 0",
 } as CSSProperties;
 
 function InstagramHealthScoreRing({ score }: { score: number }) {
@@ -90,17 +105,22 @@ function DashboardMetricCard({
   value,
   change,
   detail,
+  darkMode = false,
 }: {
   icon: LucideIcon;
   label: string;
   value: string;
   change: number;
   detail: string;
+  darkMode?: boolean;
 }) {
   const positive = change >= 0;
 
   return (
-    <GlassPanel className="overflow-hidden">
+    <GlassPanel
+      className="overflow-hidden"
+      style={darkMode ? { background: "linear-gradient(180deg, rgba(24,24,26,0.98), rgba(16,16,18,0.96))" } : undefined}
+    >
       <div className="flex items-start justify-between gap-4">
         <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,rgba(131,58,180,0.14),rgba(225,48,108,0.14),rgba(245,96,64,0.12))] text-[#8A2FB1] ring-1 ring-[#833AB4]/10">
           <Icon className="h-5 w-5" />
@@ -162,7 +182,7 @@ function ContentTypePill({ type }: { type: string }) {
 
 function SoftMemberChip({ name, role }: { name: string; role?: string }) {
   return (
-    <div className="inline-flex items-center gap-3 rounded-full border border-[#833AB4]/10 bg-white/70 px-3 py-2">
+    <div className="inline-flex items-center gap-3 rounded-full border border-[#833AB4]/10 bg-white/70 px-3 py-2 dark:bg-card/80">
       <span className="h-2.5 w-2.5 rounded-full bg-[linear-gradient(135deg,#833AB4,#E1306C)]" />
       <div className="space-y-0.5">
         <p className="text-sm font-medium text-foreground">{name}</p>
@@ -173,6 +193,8 @@ function SoftMemberChip({ name, role }: { name: string; role?: string }) {
 }
 
 export function DashboardPage() {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
   const chartLegend = [
     { label: "Alcance", color: "#833AB4" },
     { label: "Engajamento", color: "#E1306C" },
@@ -180,7 +202,7 @@ export function DashboardPage() {
 
   return (
     <PageTransition>
-      <div style={instagramTheme} className="space-y-6">
+      <div style={isDark ? instagramThemeDark : instagramThemeLight} className="space-y-6">
         <PageHeader
           eyebrow="Overview"
           title="Saúde completa do Instagram da Great"
@@ -189,8 +211,14 @@ export function DashboardPage() {
 
         <div className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
           <GlassPanel
-            className="flex flex-col items-center justify-center overflow-hidden !bg-[linear-gradient(145deg,#833AB4_0%,#E1306C_52%,#F56040_100%)] p-6 text-white !border-white/10 shadow-[0_28px_60px_rgba(131,58,180,0.18)]"
+            className="flex flex-col items-center justify-center overflow-hidden p-6 text-white shadow-[0_28px_60px_rgba(131,58,180,0.18)]"
             index={1}
+            style={{
+              background: isDark
+                ? "linear-gradient(145deg, rgba(131,58,180,0.95) 0%, rgba(225,48,108,0.92) 52%, rgba(245,96,64,0.9) 100%)"
+                : "linear-gradient(145deg, #833AB4 0%, #E1306C 52%, #F56040 100%)",
+              borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.10)",
+            }}
           >
             <InstagramHealthScoreRing score={dashboardSummary.healthScore} />
             <div className="mt-5 grid w-full gap-3 sm:grid-cols-2 xl:grid-cols-1">
@@ -219,6 +247,7 @@ export function DashboardPage() {
                   value={metric.value}
                   change={metric.change}
                   detail={metric.highlight}
+                  darkMode={isDark}
                 />
               );
             })}
@@ -226,7 +255,11 @@ export function DashboardPage() {
         </div>
 
         <div className="grid gap-6 2xl:grid-cols-[1.1fr_0.9fr]">
-          <GlassPanel index={2}>
+          <GlassPanel
+            index={2}
+            className="bg-card/90"
+            style={isDark ? { background: "linear-gradient(180deg, rgba(24,24,26,0.98), rgba(16,16,18,0.96))" } : undefined}
+          >
             <SectionTitle
               title="Top 5 conteúdos"
               description="Os posts que mais puxaram alcance, saves e conversa nas últimas semanas."
@@ -239,7 +272,15 @@ export function DashboardPage() {
                   <Link
                     key={post.id}
                     to={`/post/${post.id}`}
-                    className="flex flex-col gap-4 rounded-3xl border border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(249,249,251,0.96))] p-4 transition duration-200 hover:-translate-y-0.5 hover:border-[#833AB4]/18 hover:shadow-[0_18px_36px_rgba(131,58,180,0.07)] sm:flex-row sm:items-center sm:justify-between"
+                    className="flex flex-col gap-4 rounded-3xl border border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(249,249,251,0.96))] p-4 transition duration-200 hover:-translate-y-0.5 hover:border-[#833AB4]/18 hover:shadow-[0_18px_36px_rgba(131,58,180,0.07)] sm:flex-row sm:items-center sm:justify-between dark:hover:border-[#833AB4]/30 dark:hover:shadow-[0_18px_36px_rgba(0,0,0,0.25)]"
+                    style={
+                      isDark
+                        ? {
+                            background: "linear-gradient(180deg, rgba(24,24,26,0.98), rgba(16,16,18,0.96))",
+                            borderColor: "rgba(255,255,255,0.08)",
+                          }
+                        : undefined
+                    }
                   >
                     <div className="flex items-center gap-4">
                       <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,rgba(131,58,180,0.12),rgba(225,48,108,0.12),rgba(245,96,64,0.1))] text-sm font-semibold text-[#833AB4] ring-1 ring-[#833AB4]/10">
@@ -270,7 +311,11 @@ export function DashboardPage() {
             </div>
           </GlassPanel>
 
-          <GlassPanel index={3}>
+          <GlassPanel
+            index={3}
+            className="bg-card/90"
+            style={isDark ? { background: "linear-gradient(180deg, rgba(24,24,26,0.98), rgba(16,16,18,0.96))" } : undefined}
+          >
             <SectionTitle
               title="Conteúdos com baixa performance"
               description="Peças que pedem ajuste imediato de gancho, CTA ou proposta editorial."
@@ -282,13 +327,21 @@ export function DashboardPage() {
                 return (
                   <div
                     key={post.id}
-                    className="rounded-3xl border border-[#E1306C]/12 bg-[linear-gradient(135deg,rgba(255,248,250,1),rgba(255,245,240,1))] p-5"
+                    className="rounded-3xl border border-[#E1306C]/12 bg-[linear-gradient(135deg,rgba(255,248,250,1),rgba(255,245,240,1))] p-5 dark:border-[#E1306C]/20"
+                    style={
+                      isDark
+                        ? {
+                            background: "linear-gradient(180deg, rgba(29,23,25,0.98), rgba(22,18,19,0.98))",
+                            borderColor: "rgba(225,48,108,0.18)",
+                          }
+                        : undefined
+                    }
                   >
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="inline-flex items-center rounded-full border border-[#E1306C]/12 bg-white/70 px-3 py-1 text-xs font-semibold text-[#B34B67]">
+                      <span className="inline-flex items-center rounded-full border border-[#E1306C]/12 bg-white/70 px-3 py-1 text-xs font-semibold text-[#B34B67] dark:bg-card/80 dark:text-[#ff9db2]">
                         {post.type}
                       </span>
-                      <span className="inline-flex items-center rounded-full border border-[#F56040]/14 bg-[#F56040]/8 px-3 py-1 text-xs font-semibold text-[#B94A2D]">
+                      <span className="inline-flex items-center rounded-full border border-[#F56040]/14 bg-[#F56040]/8 px-3 py-1 text-xs font-semibold text-[#B94A2D] dark:bg-[#33211d] dark:text-[#ffab8c]">
                         Atenção suave
                       </span>
                     </div>
@@ -310,7 +363,11 @@ export function DashboardPage() {
         </div>
 
         <div className="grid gap-6 2xl:grid-cols-[0.95fr_1.05fr]">
-          <GlassPanel index={4}>
+          <GlassPanel
+            index={4}
+            className="bg-card/90"
+            style={isDark ? { background: "linear-gradient(180deg, rgba(24,24,26,0.98), rgba(16,16,18,0.96))" } : undefined}
+          >
             <SectionTitle
               title="Comparação meta vs resultado"
               description="As três metas mais críticas do ciclo atual."
@@ -321,7 +378,11 @@ export function DashboardPage() {
                 const progress = (goal.current / goal.target) * 100;
 
                 return (
-                  <div key={goal.id} className="rounded-3xl bg-muted/45 p-5">
+                  <div
+                    key={goal.id}
+                    className="rounded-3xl bg-muted/45 p-5 dark:bg-[#1c1c1f]"
+                    style={isDark ? { background: "rgba(24,24,26,0.98)" } : undefined}
+                  >
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                       <div className="space-y-2">
                         <h3 className="text-base font-semibold text-foreground">{goal.name}</h3>
@@ -343,7 +404,11 @@ export function DashboardPage() {
             </div>
           </GlassPanel>
 
-          <GlassPanel index={5}>
+          <GlassPanel
+            index={5}
+            className="bg-card/90"
+            style={isDark ? { background: "linear-gradient(180deg, rgba(24,24,26,0.98), rgba(16,16,18,0.96))" } : undefined}
+          >
             <SectionTitle
               title="Evolução nos últimos 30 dias"
               description="A curva conjunta de alcance e engajamento mostra aceleração sustentável."

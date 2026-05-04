@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Plus, Lightbulb, X } from "lucide-react";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "motion/react";
+import { useTheme } from "next-themes";
 import { ideas, teamMembers } from "../data/mockData";
 import { createStorageKey, useSharedState } from "../data/sharedState";
 import {
@@ -25,6 +26,8 @@ function MemberDropdown({
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const selectedMember = teamMembers.find((member) => member.id === value) ?? teamMembers[0];
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
 
   useEffect(() => {
     const handlePointerDown = (event: MouseEvent) => {
@@ -54,7 +57,12 @@ function MemberDropdown({
       </button>
 
       {open ? (
-        <div className="absolute left-0 top-full z-50 mt-2 w-full rounded-[1.5rem] border border-border/70 bg-white p-2 shadow-[0_24px_60px_rgba(15,23,42,0.14)]">
+        <div
+          className="absolute left-0 top-full z-50 mt-2 w-full rounded-[1.5rem] border border-border/70 p-2 shadow-[0_24px_60px_rgba(15,23,42,0.14)]"
+          style={{
+            backgroundColor: isDark ? "rgb(var(--card) / 0.98)" : "rgb(255 255 255 / 1)",
+          }}
+        >
           <p className="px-3 pb-2 pt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
             Responsável
           </p>
@@ -93,6 +101,8 @@ function MemberDropdown({
 }
 
 export function IdeasPage() {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
   const [items, setItems] = useSharedState(createStorageKey("ideas"), ideas);
   const [isSparkOpen, setIsSparkOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -214,7 +224,9 @@ export function IdeasPage() {
       <div className="grid gap-6 xl:grid-cols-2">
         {items.map((idea, index) => {
           const member = teamMembers.find((item) => item.id === idea.responsibleId)!;
-          const panelBackground = `linear-gradient(180deg, rgba(255,255,255,0.98), ${member.color}08)`;
+          const panelBackground = isDark
+            ? `linear-gradient(180deg, rgba(20,20,22,0.98), ${member.color}10)`
+            : `linear-gradient(180deg, rgba(255,255,255,0.98), ${member.color}08)`;
 
           return (
             <GlassPanel
@@ -246,7 +258,7 @@ export function IdeasPage() {
               <div className="mt-5">
                 <div className="flex flex-wrap items-center gap-3">
                   <h2 className="text-xl font-semibold text-foreground">{idea.title}</h2>
-                  <span className="rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
+                  <span className="rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground dark:bg-muted/80 dark:text-foreground">
                     {idea.theme}
                   </span>
                 </div>
@@ -254,7 +266,10 @@ export function IdeasPage() {
               </div>
 
               {idea.script ? (
-                <div className="mt-5 rounded-3xl p-4" style={{ backgroundColor: `${member.color}08` }}>
+                <div
+                  className="mt-5 rounded-3xl p-4"
+                  style={{ backgroundColor: isDark ? `${member.color}14` : `${member.color}08` }}
+                >
                   <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Roteiro</p>
                   <p className="mt-2 text-sm leading-6 text-foreground">{idea.script}</p>
                 </div>

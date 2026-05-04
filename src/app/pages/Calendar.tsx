@@ -181,7 +181,7 @@ function CalendarSlot({
         }
       }}
       className={cn(
-        "relative min-h-[92px] border-l border-t border-border/45 bg-white/85 p-2 transition",
+        "relative min-h-[92px] border-l border-t border-border/45 bg-white/85 p-2 transition dark:bg-card/90 dark:border-border/60",
         events.length === 0 && "cursor-pointer hover:bg-primary/5",
         isOver && "bg-primary/5",
       )}
@@ -204,7 +204,7 @@ function CalendarSlot({
               event.stopPropagation();
               onAddAtSlot(date, time);
             }}
-            className="absolute bottom-2 left-1/2 z-20 inline-flex h-5 w-5 -translate-x-1/2 items-center justify-center rounded-full border border-rose-200 bg-white text-[11px] font-bold leading-none text-rose-600 shadow-sm transition hover:bg-rose-50"
+            className="absolute bottom-2 left-1/2 z-20 inline-flex h-5 w-5 -translate-x-1/2 items-center justify-center rounded-full border border-rose-200 bg-white text-[11px] font-bold leading-none text-rose-600 shadow-sm transition hover:bg-rose-50 dark:border-[#3c2127] dark:bg-card dark:text-[#ff8da5] dark:hover:bg-[#2a171b]"
             aria-label="Adicionar tarefa neste horário"
           >
             +
@@ -220,7 +220,7 @@ function MiniMonth({ date }: { date: Date }) {
   const currentDay = formatDateKey(referenceDate);
 
   return (
-    <div className="rounded-[1.75rem] border border-border/60 bg-white p-4 shadow-sm">
+    <div className="rounded-[1.75rem] border border-border/60 bg-white p-4 shadow-sm dark:bg-card/95 dark:shadow-[0_18px_36px_rgba(0,0,0,0.18)]">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-foreground">{formatMonthLabel(date)}</h3>
         <span className="text-xs font-medium text-muted-foreground">Abr 2026</span>
@@ -265,7 +265,7 @@ function SideAgenda({
   const orderedEvents = [...events].sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`));
 
   return (
-    <div className="rounded-[1.75rem] border border-border/60 bg-white p-4 shadow-sm">
+    <div className="rounded-[1.75rem] border border-border/60 bg-white p-4 shadow-sm dark:bg-card/95 dark:shadow-[0_18px_36px_rgba(0,0,0,0.18)]">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-foreground">Agenda rápida</h3>
         <CirclePlus className="h-4 w-4 text-muted-foreground" />
@@ -331,7 +331,7 @@ function MemberDropdown({
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        className="flex w-full items-center justify-between gap-3 rounded-2xl border border-border/70 bg-background px-4 py-3 text-sm transition hover:border-primary/25 hover:shadow-sm"
+        className="flex w-full items-center justify-between gap-3 rounded-2xl border border-border/70 bg-background px-4 py-3 text-sm transition hover:border-primary/25 hover:shadow-sm dark:bg-card/90 dark:hover:bg-card"
       >
         <span className="flex items-center gap-3 text-left">
           <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: selectedMember.color }} />
@@ -343,7 +343,7 @@ function MemberDropdown({
       </button>
 
       {open ? (
-        <div className="absolute left-0 top-full z-50 mt-2 w-full rounded-[1.5rem] border border-border/70 bg-white p-2 shadow-[0_24px_60px_rgba(15,23,42,0.14)]">
+        <div className="absolute left-0 top-full z-50 mt-2 w-full rounded-[1.5rem] border border-border/70 bg-white p-2 shadow-[0_24px_60px_rgba(15,23,42,0.14)] dark:border-border/60 dark:bg-card/95 dark:shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
           <p className="px-3 pb-2 pt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
             Responsável
           </p>
@@ -553,7 +553,7 @@ export function CalendarPage() {
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border/70 bg-white text-foreground shadow-sm transition hover:bg-muted"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border/70 bg-white text-foreground shadow-sm transition hover:bg-muted dark:bg-card/90 dark:hover:bg-card"
                 onClick={() => setCurrentDate(referenceDate)}
               >
                 <Menu className="h-4 w-4" />
@@ -576,21 +576,21 @@ export function CalendarPage() {
                 <button
                   type="button"
                   onClick={() => handleNavigate(-1)}
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border/70 bg-white text-foreground shadow-sm transition hover:bg-muted"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border/70 bg-white text-foreground shadow-sm transition hover:bg-muted dark:bg-card/90 dark:hover:bg-card"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
                 <button
                   type="button"
                   onClick={() => handleNavigate(1)}
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border/70 bg-white text-foreground shadow-sm transition hover:bg-muted"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border/70 bg-white text-foreground shadow-sm transition hover:bg-muted dark:bg-card/90 dark:hover:bg-card"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>
                 <button
                   type="button"
                   onClick={() => setCurrentDate(referenceDate)}
-                  className="rounded-full border border-border/70 bg-white px-4 py-2.5 text-sm font-semibold text-foreground shadow-sm transition hover:bg-muted"
+                className="rounded-full border border-border/70 bg-white px-4 py-2.5 text-sm font-semibold text-foreground shadow-sm transition hover:bg-muted dark:bg-card/90 dark:hover:bg-card"
                 >
                   Hoje
                 </button>
@@ -624,8 +624,8 @@ export function CalendarPage() {
           <GlassPanel className="overflow-hidden p-0">
             {view === "Semana" ? (
               <div className="overflow-x-auto">
-                <div className="min-w-[980px] rounded-[2rem] bg-white">
-                  <div className="sticky top-0 z-10 grid grid-cols-[72px_repeat(7,minmax(0,1fr))] border-b border-border/50 bg-white/95 backdrop-blur">
+                <div className="min-w-[980px] rounded-[2rem] bg-white dark:bg-card/95">
+                  <div className="sticky top-0 z-10 grid grid-cols-[72px_repeat(7,minmax(0,1fr))] border-b border-border/50 bg-white/95 backdrop-blur dark:bg-card/95">
                     <div className="px-3 py-4" />
                     {weekDates.map((date, index) => {
                       const isToday = formatDateKey(date) === formatDateKey(referenceDate);
@@ -725,7 +725,7 @@ export function CalendarPage() {
                         <div
                           key={dateKey}
                           className={cn(
-                          "min-h-44 rounded-[1.6rem] border border-border/60 bg-white p-3",
+                          "min-h-44 rounded-[1.6rem] border border-border/60 bg-white p-3 dark:bg-card/95",
                           !isCurrentMonth && "opacity-45",
                         )}
                       >
@@ -757,7 +757,7 @@ export function CalendarPage() {
           onClick={() => setSelectedEvent(null)}
         >
           <div
-            className="w-full max-w-lg rounded-[2rem] border border-border/60 bg-white p-6 shadow-[0_30px_80px_rgba(15,23,42,0.18)]"
+            className="w-full max-w-lg rounded-[2rem] border border-border/60 bg-white p-6 shadow-[0_30px_80px_rgba(15,23,42,0.18)] dark:bg-card/95 dark:shadow-[0_30px_80px_rgba(0,0,0,0.35)]"
             onClick={(event) => event.stopPropagation()}
           >
             {(() => {
@@ -842,7 +842,7 @@ export function CalendarPage() {
           onClick={() => setIsCreateOpen(false)}
         >
           <div
-            className="w-full max-w-2xl rounded-[2rem] border border-border/60 bg-white p-6 shadow-[0_30px_80px_rgba(15,23,42,0.18)]"
+            className="w-full max-w-2xl rounded-[2rem] border border-border/60 bg-white p-6 shadow-[0_30px_80px_rgba(15,23,42,0.18)] dark:bg-card/95 dark:shadow-[0_30px_80px_rgba(0,0,0,0.35)]"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-4">

@@ -176,9 +176,9 @@ export function IconActionButton({
 }) {
   const tones = {
     neutral:
-      "border-border/70 bg-white/95 text-muted-foreground shadow-sm hover:border-primary/25 hover:text-foreground hover:shadow-md",
+      "border-border/70 bg-white/95 text-muted-foreground shadow-sm hover:border-primary/25 hover:text-foreground hover:shadow-md dark:bg-card/90 dark:text-muted-foreground dark:hover:bg-card",
     danger:
-      "border-rose-200 bg-white/95 text-rose-500 shadow-sm hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600 hover:shadow-md",
+      "border-rose-200 bg-white/95 text-rose-500 shadow-sm hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600 hover:shadow-md dark:bg-card/90 dark:text-[#ff8da5] dark:hover:bg-[#2a171b]",
   };
 
   return (
@@ -229,11 +229,11 @@ export function ConfirmDialog({
       onClick={onCancel}
     >
       <div
-        className="w-full max-w-md rounded-[2rem] border border-border/60 bg-white p-6 shadow-[0_30px_80px_rgba(15,23,42,0.18)]"
+        className="w-full max-w-md rounded-[2rem] border border-border/60 bg-white p-6 shadow-[0_30px_80px_rgba(15,23,42,0.18)] dark:bg-card/95 dark:shadow-[0_30px_80px_rgba(0,0,0,0.35)]"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-start gap-4">
-          <div className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-rose-50 text-rose-600">
+          <div className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 dark:bg-[#2a171b] dark:text-[#ff8da5]">
             <AlertTriangle className="h-5 w-5" />
           </div>
           <div className="space-y-2">

@@ -21,6 +21,7 @@ import {
   PageTransition,
   SectionTitle,
 } from "../components/ui";
+import { useTheme } from "next-themes";
 
 function MemberProgressBar({ value, max, color }: { value: number; max: number; color: string }) {
   const progress = max === 0 ? 0 : (value / max) * 100;
@@ -41,9 +42,13 @@ function MemberProgressBar({ value, max, color }: { value: number; max: number; 
 export function MemberProfilePage() {
   const navigate = useNavigate();
   const params = useParams();
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
   const member = teamMembers.find((item) => String(item.id) === params.id) ?? teamMembers[0];
   const memberGoals = goals.filter((goal) => goal.responsibleId === member.id);
-  const panelBackground = `linear-gradient(180deg, rgba(255,255,255,0.98), ${member.color}08)`;
+  const panelBackground = isDark
+    ? `linear-gradient(180deg, rgba(24,24,26,0.98), ${member.color}12)`
+    : `linear-gradient(180deg, rgba(255,255,255,0.98), ${member.color}08)`;
 
   return (
     <PageTransition>
@@ -89,7 +94,10 @@ export function MemberProfilePage() {
               <p className="text-sm text-muted-foreground">{member.specialty}</p>
             </div>
           </div>
-          <div className="rounded-3xl px-6 py-5 text-center" style={{ backgroundColor: `${member.color}08` }}>
+          <div
+            className="rounded-3xl px-6 py-5 text-center"
+            style={{ backgroundColor: isDark ? `${member.color}14` : `${member.color}08` }}
+          >
             <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Performance Score</p>
             <p className="mt-2 text-5xl font-semibold text-foreground">{member.stats.performance}</p>
           </div>
@@ -149,9 +157,13 @@ export function MemberProfilePage() {
           title="Metas atribuídas"
           description="Panorama das metas sob responsabilidade deste membro."
         />
-        <div className="mt-5 grid gap-4">
-          {memberGoals.map((goal) => (
-            <div key={goal.id} className="rounded-3xl p-5" style={{ backgroundColor: `${member.color}08` }}>
+          <div className="mt-5 grid gap-4">
+            {memberGoals.map((goal) => (
+            <div
+              key={goal.id}
+              className="rounded-3xl p-5"
+              style={{ backgroundColor: isDark ? `${member.color}12` : `${member.color}08` }}
+            >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h3 className="text-lg font-semibold text-foreground">{goal.name}</h3>
