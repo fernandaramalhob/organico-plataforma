@@ -1,8 +1,8 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { Clock3, Lightbulb, TrendingDown, TrendingUp, Zap } from "lucide-react";
-import { useTheme } from "next-themes";
 import { contentDistribution, insights } from "../data/mockData";
 import { GlassPanel, PageHeader, PageTransition, SectionTitle } from "../components/ui";
+import { useThemeMode } from "../theme";
 
 const distributionNotes: Record<string, string> = {
   Reels: "Maior força para alcance e descoberta.",
@@ -47,8 +47,7 @@ const cards = [
 ];
 
 export function InsightsPage() {
-  const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
+  const { isDark } = useThemeMode();
 
   return (
     <PageTransition>

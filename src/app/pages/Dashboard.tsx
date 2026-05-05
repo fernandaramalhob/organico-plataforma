@@ -1,6 +1,5 @@
 import type { CSSProperties } from "react";
 import { Link } from "react-router-dom";
-import { useTheme } from "next-themes";
 import {
   Area,
   AreaChart,
@@ -29,6 +28,7 @@ import {
   formatCompactNumber,
   formatLongNumber,
 } from "../components/ui";
+import { useThemeMode } from "../theme";
 
 const metricIcons = [Eye, BarChart3, Sparkles, Rocket];
 
@@ -200,8 +200,7 @@ function SoftMemberChip({ name, role }: { name: string; role?: string }) {
 }
 
 export function DashboardPage() {
-  const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
+  const { isDark } = useThemeMode();
   const [teamMembers] = useTeamProfiles();
   const chartLegend = [
     { label: "Alcance", color: "#833AB4" },

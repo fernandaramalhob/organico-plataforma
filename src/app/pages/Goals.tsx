@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Plus, X } from "lucide-react";
 import { toast } from "sonner";
-import { useTheme } from "next-themes";
 import { goals } from "../data/mockData";
 import { useTeamProfiles } from "../data/profiles";
 import { createStorageKey, useSharedState } from "../data/sharedState";
@@ -14,6 +13,7 @@ import {
   PageHeader,
   PageTransition,
 } from "../components/ui";
+import { useThemeMode } from "../theme";
 
 function GoalProgressBar({ value, max, color }: { value: number; max: number; color: string }) {
   const progress = max === 0 ? 0 : (value / max) * 100;
@@ -32,8 +32,7 @@ function GoalProgressBar({ value, max, color }: { value: number; max: number; co
 }
 
 export function GoalsPage() {
-  const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
+  const { isDark } = useThemeMode();
   const [teamMembers] = useTeamProfiles();
   const [items, setItems] = useSharedState(createStorageKey("goals"), goals);
   const [isCreateOpen, setIsCreateOpen] = useState(false);

@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { CalendarClock, ChevronDown, SlidersHorizontal, Target, FileText } from "lucide-react";
-import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import { historyTimeline } from "../data/mockData";
 import { createStorageKey, useSharedState } from "../data/sharedState";
 import { useTeamProfiles } from "../data/profiles";
+import { useThemeMode } from "../theme";
 import {
   ConfirmDialog,
   DeleteIconButton,
@@ -118,8 +118,7 @@ function FilterDropdown<T extends string | number>({
 }
 
 export function HistoryPage() {
-  const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
+  const { isDark } = useThemeMode();
   const [teamMembers] = useTeamProfiles();
   const [itemsState, setItemsState] = useSharedState(createStorageKey("history"), historyTimeline);
   const [view, setView] = useState<"Timeline" | "Tabela">("Timeline");

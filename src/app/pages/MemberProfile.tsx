@@ -14,6 +14,7 @@ import {
 import { useNavigate, useParams } from "react-router-dom";
 import { goals } from "../data/mockData";
 import { useTeamProfiles } from "../data/profiles";
+import { useThemeMode } from "../theme";
 import {
   Avatar,
   DetailGrid,
@@ -22,7 +23,6 @@ import {
   PageTransition,
   SectionTitle,
 } from "../components/ui";
-import { useTheme } from "next-themes";
 
 function MemberProgressBar({ value, max, color }: { value: number; max: number; color: string }) {
   const progress = max === 0 ? 0 : (value / max) * 100;
@@ -43,8 +43,7 @@ function MemberProgressBar({ value, max, color }: { value: number; max: number; 
 export function MemberProfilePage() {
   const navigate = useNavigate();
   const params = useParams();
-  const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
+  const { isDark } = useThemeMode();
   const [teamMembers] = useTeamProfiles();
   const member = teamMembers.find((item) => String(item.id) === params.id) ?? teamMembers[0];
   const memberGoals = goals.filter((goal) => goal.responsibleId === member.id);

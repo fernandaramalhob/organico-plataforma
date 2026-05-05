@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { MoonStar, PanelLeft, SunMedium } from "lucide-react";
-import { useTheme } from "next-themes";
 import {
   Calendar,
   CheckCircle2,
@@ -9,14 +7,17 @@ import {
   History,
   LayoutDashboard,
   Lightbulb,
-  UserCircle2,
+  PanelLeft,
+  MoonStar,
   Target,
   TrendingUp,
+  SunMedium,
   Users,
   X,
 } from "lucide-react";
 import { Avatar, cn } from "./ui";
 import { useCurrentTeamMember } from "../data/profiles";
+import { useThemeMode } from "../theme";
 
 const navigation = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -33,7 +34,7 @@ const navigation = [
 export function Sidebar({ onLogout }: { onLogout?: () => void }) {
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
-  const { theme, setTheme } = useTheme();
+  const { isDark, setTheme } = useThemeMode();
   const { member } = useCurrentTeamMember();
 
   useEffect(() => {
@@ -45,7 +46,7 @@ export function Sidebar({ onLogout }: { onLogout?: () => void }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed left-4 top-4 z-40 inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-border/70 bg-card/90 text-foreground shadow-[var(--shadow-card)] backdrop-blur xl:hidden dark:border-white/8 dark:bg-card/96"
+        className="fixed left-4 top-4 z-40 inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-border/70 bg-card/90 text-foreground shadow-[var(--shadow-card)] backdrop-blur xl:hidden"
       >
         <PanelLeft className="h-5 w-5" />
       </button>
@@ -61,11 +62,16 @@ export function Sidebar({ onLogout }: { onLogout?: () => void }) {
 
       <aside
         className={cn(
-          "fixed left-0 top-0 z-40 flex h-screen w-64 flex-col border-r border-border/60 bg-sidebar/90 p-4 backdrop-blur-xl transition-transform duration-300 xl:z-0 xl:static xl:translate-x-0 dark:border-white/8 dark:bg-sidebar/96",
+          "fixed left-0 top-0 z-40 flex h-screen w-64 flex-col border-r border-border/60 bg-sidebar/90 p-4 backdrop-blur-xl transition-transform duration-300 xl:z-0 xl:static xl:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        <div className="mb-6 flex items-center justify-between xl:justify-start">
+        <NavLink
+          to="/profile"
+          aria-label="Meu Perfil"
+          title="Meu Perfil"
+          className="mb-6 flex items-center justify-between rounded-3xl border border-transparent px-2 py-2 transition hover:border-border/60 hover:bg-card-strong/70 xl:justify-start"
+        >
           <div className="flex items-center gap-3">
             <Avatar
               name={member?.name ?? "G"}
@@ -85,7 +91,7 @@ export function Sidebar({ onLogout }: { onLogout?: () => void }) {
           >
             <X className="h-4 w-4" />
           </button>
-        </div>
+        </NavLink>
 
         <nav className="flex-1 space-y-1">
           {navigation.map(({ to, label, icon: Icon }) => (
@@ -107,41 +113,27 @@ export function Sidebar({ onLogout }: { onLogout?: () => void }) {
           ))}
         </nav>
 
-        <div className="mb-1 rounded-3xl border border-border/60 bg-card-strong/90 p-2">
-          <NavLink
-            to="/profile"
-            className={({ isActive }) =>
-              cn(
-                "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition duration-200",
-                isActive
-                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
-                  : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
-              )
-            }
-          >
-            <UserCircle2 className="h-4 w-4" />
-            Meu Perfil
-          </NavLink>
-        </div>
-
-        <div className="mt-1 rounded-3xl border border-border/60 bg-card-strong/90 p-4 dark:border-white/8 dark:bg-card-strong/96">
-          <button
-            type="button"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="flex w-full items-center justify-between rounded-2xl bg-muted/70 px-4 py-3 text-sm font-medium text-foreground transition hover:bg-muted dark:bg-white/5 dark:hover:bg-white/10"
-          >
-            <span>{theme === "dark" ? "Modo claro" : "Modo escuro"}</span>
-            {theme === "dark" ? <SunMedium className="h-4 w-4" /> : <MoonStar className="h-4 w-4" />}
-          </button>
-          {onLogout ? (
+        <div className="mt-1 rounded-3xl border border-border/60 bg-card-strong/90 p-3 shadow-[0_12px_30px_rgba(15,23,42,0.04)] dark:border-white/8 dark:bg-card-strong/96 dark:shadow-[0_12px_30px_rgba(0,0,0,0.24)]">
+          <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={onLogout}
-              className="mt-3 flex w-full items-center justify-center rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm font-semibold text-primary transition hover:bg-primary/10"
+              onClick={() => setTheme(isDark ? "light" : "dark")}
+              aria-label={isDark ? "Trocar para modo claro" : "Trocar para modo escuro"}
+              title={isDark ? "Modo claro" : "Modo escuro"}
+              className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-border/50 bg-muted/35 text-foreground transition hover:bg-muted/50 dark:border-white/5 dark:bg-white/5 dark:hover:bg-white/10"
             >
-              Sair
+              {isDark ? <SunMedium className="h-4 w-4" /> : <MoonStar className="h-4 w-4" />}
             </button>
-          ) : null}
+            {onLogout ? (
+              <button
+                type="button"
+                onClick={onLogout}
+                className="flex flex-1 items-center justify-center rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm font-semibold text-primary transition hover:bg-primary/10"
+              >
+                Sair
+              </button>
+            ) : null}
+          </div>
         </div>
       </aside>
     </>

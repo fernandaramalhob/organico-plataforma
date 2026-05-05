@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ImagePlus, RefreshCw, X } from "lucide-react";
 import { toast } from "sonner";
-import { useTheme } from "next-themes";
 import { apiStatus, goals, metaPeriods } from "../data/mockData";
 import { createStorageKey, useSharedState } from "../data/sharedState";
 import { useTeamProfiles } from "../data/profiles";
+import { useThemeMode } from "../theme";
 import {
   ActionButton,
   Avatar,
@@ -22,8 +22,7 @@ type GoalImages = Record<number, string[]>;
 
 export function MetaInsightsPage() {
   const [period, setPeriod] = useState<(typeof metaPeriods)[number]>("Mês");
-  const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
+  const { isDark } = useThemeMode();
   const [teamMembers] = useTeamProfiles();
   const [items, setItems] = useSharedState(createStorageKey("meta-goals"), goals);
   const [goalImages, setGoalImages] = useSharedState<GoalImages>(createStorageKey("goal-images"), {});

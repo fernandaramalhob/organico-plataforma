@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { PencilLine, Save, Upload, Users, X } from "lucide-react";
+import { Maximize2, PencilLine, Save, Upload, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, ActionButton, GlassPanel, PageHeader, PageTransition, SectionTitle, cn } from "../components/ui";
 import { useCurrentTeamMember, useTeamProfiles, type EditableTeamMember } from "../data/profiles";
@@ -45,6 +45,7 @@ export function MyProfilePage() {
   const [profiles] = useTeamProfiles();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [editForm, setEditForm] = useState<EditableTeamMember | null>(null);
 
   useEffect(() => {
@@ -69,6 +70,21 @@ export function MyProfilePage() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isEditOpen]);
+
+  useEffect(() => {
+    if (!isPreviewOpen) {
+      return undefined;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsPreviewOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isPreviewOpen]);
 
   const memberCount = profiles.length;
   const color = member?.color ?? "rgb(var(--primary) / 1)";
@@ -134,7 +150,18 @@ export function MyProfilePage() {
           >
             <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
               <div className="flex items-start gap-5">
-                <Avatar name={member.name} color={member.color} src={member.avatarUrl} size="lg" />
+                <button
+                  type="button"
+                  onClick={() => setIsPreviewOpen(true)}
+                  className="group relative inline-flex shrink-0 cursor-zoom-in items-center justify-center rounded-3xl outline-none transition hover:scale-[1.02] focus-visible:ring-2 focus-visible:ring-primary/30"
+                  aria-label="Ampliar foto de perfil"
+                  title="Ampliar foto de perfil"
+                >
+                  <Avatar name={member.name} color={member.color} src={member.avatarUrl} size="lg" />
+                  <span className="absolute -bottom-1 -right-1 inline-flex h-8 w-8 items-center justify-center rounded-full border border-border/70 bg-background text-muted-foreground shadow-sm transition group-hover:text-foreground">
+                    <Maximize2 className="h-3.5 w-3.5" />
+                  </span>
+                </button>
                 <div className="space-y-3">
                   <div>
                     <h2 className="text-3xl font-semibold tracking-tight text-foreground">{member.name}</h2>
@@ -334,6 +361,49 @@ export function MyProfilePage() {
                 <Save className="h-4 w-4" />
                 Salvar alterações
               </ActionButton>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {isPreviewOpen ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4 backdrop-blur-md"
+          onClick={() => setIsPreviewOpen(false)}
+        >
+          <div
+            className="w-full max-w-xl overflow-hidden rounded-[2rem] border border-border/60 bg-white p-5 shadow-[0_30px_80px_rgba(15,23,42,0.24)]"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Foto de perfil</p>
+                <h3 className="mt-2 text-2xl font-semibold tracking-tight text-foreground">{member.name}</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsPreviewOpen(false)}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground transition hover:bg-muted/80 hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="mt-5 flex items-center justify-center rounded-[1.75rem] border border-border/60 bg-muted/20 p-5">
+              {member.avatarUrl ? (
+                <img
+                  src={member.avatarUrl}
+                  alt={member.name}
+                  className="max-h-[70vh] w-full max-w-[420px] rounded-[1.5rem] object-cover shadow-[0_24px_60px_rgba(15,23,42,0.18)]"
+                />
+              ) : (
+                <div
+                  className="flex h-[420px] w-full max-w-[420px] items-center justify-center rounded-[1.5rem] text-7xl font-semibold text-white shadow-[0_24px_60px_rgba(15,23,42,0.18)]"
+                  style={{ backgroundColor: member.color }}
+                >
+                  {member.name.charAt(0).toUpperCase()}
+                </div>
+              )}
             </div>
           </div>
         </div>

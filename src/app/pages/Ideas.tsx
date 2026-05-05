@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Plus, Lightbulb, X } from "lucide-react";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "motion/react";
-import { useTheme } from "next-themes";
 import { ideas } from "../data/mockData";
 import { createStorageKey, useSharedState } from "../data/sharedState";
 import { useTeamProfiles } from "../data/profiles";
+import { useThemeMode } from "../theme";
 import {
   ActionButton,
   ConfirmDialog,
@@ -28,8 +28,7 @@ function MemberDropdown({
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [teamMembers] = useTeamProfiles();
   const selectedMember = teamMembers.find((member) => member.id === value) ?? teamMembers[0];
-  const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
+  const { isDark } = useThemeMode();
 
   useEffect(() => {
     const handlePointerDown = (event: MouseEvent) => {
@@ -103,8 +102,7 @@ function MemberDropdown({
 }
 
 export function IdeasPage() {
-  const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
+  const { isDark } = useThemeMode();
   const [teamMembers] = useTeamProfiles();
   const [items, setItems] = useSharedState(createStorageKey("ideas"), ideas);
   const [isSparkOpen, setIsSparkOpen] = useState(false);
@@ -261,7 +259,7 @@ export function IdeasPage() {
               <div className="mt-5">
                 <div className="flex flex-wrap items-center gap-3">
                   <h2 className="text-xl font-semibold text-foreground">{idea.title}</h2>
-                  <span className="rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground dark:bg-muted/80 dark:text-foreground">
+                  <span className="rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
                     {idea.theme}
                   </span>
                 </div>
