@@ -513,6 +513,14 @@ export function GoalsPage() {
     });
   };
 
+  const setQuickResponsibleCount = (count: number) => {
+    const selectedIds = teamCards.slice(0, count).map((member) => member.id);
+    setForm((previous) => ({
+      ...previous,
+      responsibleIds: selectedIds,
+    }));
+  };
+
   const handleSaveGoal = () => {
     const target = Number(form.target);
     const current = Number(form.current);
@@ -841,12 +849,59 @@ export function GoalsPage() {
                         <div className="mb-4 flex items-center justify-between gap-3">
                           <div>
                             <p className="text-sm font-semibold text-foreground">Selecione uma ou várias pessoas</p>
-                            <p className="text-xs text-muted-foreground">A meta pode ser individual ou compartilhada por todo o time.</p>
+                            <p className="text-xs text-muted-foreground">
+                              A meta pode ser individual ou compartilhada por 2 ou 3 pessoas.
+                            </p>
                           </div>
                           <span className="inline-flex items-center gap-2 rounded-full bg-background px-3 py-1 text-xs font-semibold text-muted-foreground shadow-sm dark:bg-card/80">
                             <Users className="h-3.5 w-3.5" />
                             {form.responsibleIds.length} selecionado{form.responsibleIds.length === 1 ? "" : "s"}
                           </span>
+                        </div>
+                        <div className="mb-4 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setQuickResponsibleCount(1)}
+                            className={cn(
+                              "rounded-full border px-3 py-2 text-xs font-semibold transition",
+                              form.responsibleIds.length === 1
+                                ? "border-primary bg-primary text-primary-foreground"
+                                : "border-border/60 bg-background text-foreground hover:border-primary/25 hover:bg-primary/5",
+                            )}
+                          >
+                            1 pessoa
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setQuickResponsibleCount(2)}
+                            className={cn(
+                              "rounded-full border px-3 py-2 text-xs font-semibold transition",
+                              form.responsibleIds.length === 2
+                                ? "border-primary bg-primary text-primary-foreground"
+                                : "border-border/60 bg-background text-foreground hover:border-primary/25 hover:bg-primary/5",
+                            )}
+                          >
+                            2 pessoas
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setQuickResponsibleCount(3)}
+                            className={cn(
+                              "rounded-full border px-3 py-2 text-xs font-semibold transition",
+                              form.responsibleIds.length >= 3
+                                ? "border-primary bg-primary text-primary-foreground"
+                                : "border-border/60 bg-background text-foreground hover:border-primary/25 hover:bg-primary/5",
+                            )}
+                          >
+                            3 pessoas
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setForm((previous) => ({ ...previous, responsibleIds: [] }))}
+                            className="rounded-full border border-border/60 bg-background px-3 py-2 text-xs font-semibold text-muted-foreground transition hover:border-primary/20 hover:text-foreground"
+                          >
+                            Limpar
+                          </button>
                         </div>
                         <GoalAssigneeChips members={teamCards} selectedIds={form.responsibleIds} onToggle={toggleResponsible} />
                       </div>
@@ -871,6 +926,18 @@ export function GoalsPage() {
                     </div>
 
                     <div className="md:col-span-2">
+                      <div className="mb-2 flex items-center justify-between gap-3">
+                        <div>
+                          <span className="block text-sm font-medium text-foreground">Data limite</span>
+                          <span className="block text-xs text-muted-foreground">
+                            Escolha a data no calendário para ficar exata.
+                          </span>
+                        </div>
+                        <span className="inline-flex items-center gap-2 rounded-full bg-muted/50 px-3 py-1 text-xs font-semibold text-muted-foreground">
+                          <CalendarDays className="h-3.5 w-3.5" />
+                          Calendário
+                        </span>
+                      </div>
                       <GoalDatePicker
                         value={form.deadline}
                         onChange={(value) => setForm((previous) => ({ ...previous, deadline: value }))}
