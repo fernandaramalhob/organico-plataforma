@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { apiStatus, goals, metaPeriods } from "../data/mockData";
 import { createStorageKey, useSharedState } from "../data/sharedState";
 import { useTeamProfiles } from "../data/profiles";
+import { useSupabaseSyncedListState } from "../data/supabaseSync";
 import { useThemeMode } from "../theme";
 import {
   ActionButton,
@@ -24,7 +25,7 @@ export function MetaInsightsPage() {
   const [period, setPeriod] = useState<(typeof metaPeriods)[number]>("Mês");
   const { isDark } = useThemeMode();
   const [teamMembers] = useTeamProfiles();
-  const [items, setItems] = useSharedState(createStorageKey("meta-goals"), goals);
+  const [items, setItems] = useSupabaseSyncedListState({ key: "goals", table: "goals", fallback: goals });
   const [goalImages, setGoalImages] = useSharedState<GoalImages>(createStorageKey("goal-images"), {});
   const [activeGoalId, setActiveGoalId] = useState<number | null>(null);
   const [pendingDelete, setPendingDelete] = useState<{ goalId: number; goalName: string } | null>(null);

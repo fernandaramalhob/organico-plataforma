@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { CalendarClock, ChevronDown, SlidersHorizontal, Target, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { historyTimeline } from "../data/mockData";
-import { createStorageKey, useSharedState } from "../data/sharedState";
 import { useTeamProfiles } from "../data/profiles";
+import { useSupabaseSyncedListState } from "../data/supabaseSync";
 import { useThemeMode } from "../theme";
 import {
   ConfirmDialog,
@@ -120,7 +120,11 @@ function FilterDropdown<T extends string | number>({
 export function HistoryPage() {
   const { isDark } = useThemeMode();
   const [teamMembers] = useTeamProfiles();
-  const [itemsState, setItemsState] = useSharedState(createStorageKey("history"), historyTimeline);
+  const [itemsState, setItemsState] = useSupabaseSyncedListState({
+    key: "history",
+    table: "history_events",
+    fallback: historyTimeline,
+  });
   const [view, setView] = useState<"Timeline" | "Tabela">("Timeline");
   const [personFilter, setPersonFilter] = useState<number | "todos">("todos");
   const [typeFilter, setTypeFilter] = useState<"todos" | "post" | "goal" | "schedule">("todos");

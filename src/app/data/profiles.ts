@@ -1,6 +1,7 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { getAuthenticatedMemberId } from "../auth";
 import { createStorageKey, useSharedState } from "./sharedState";
+import { isSupabaseConfigured, supabase } from "./supabase";
 import { teamMembers as baseTeamMembers, type TeamMember } from "./mockData";
 
 export type EditableTeamMember = TeamMember & {
@@ -9,6 +10,12 @@ export type EditableTeamMember = TeamMember & {
   avatarUrl: string;
   bio: string;
 };
+
+type TeamProfileRow = Partial<EditableTeamMember> & {
+  id?: number | string | null;
+};
+
+const teamProfilesTable = "team_profiles";
 
 const seedAccounts: EditableTeamMember[] = baseTeamMembers.map((member, index) => {
   const credentials = [
@@ -29,7 +36,96 @@ const seedAccounts: EditableTeamMember[] = baseTeamMembers.map((member, index) =
 });
 
 export function useTeamProfiles() {
-  return useSharedState(createStorageKey("team-profiles"), seedAccounts);
+  const sharedState = useSharedState(createStorageKey("team-profiles"), seedAccounts);
+  const [profiles, setProfiles] = sharedState;
+  const hydratedRef = useRef(false);
+  const supabaseClient = supabase;
+
+  useEffect(() => {
+    if (!isSupabaseConfigured() || !supabaseClient) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const syncTeamProfiles = async () => {
+      const { data, error } = await supabaseClient.from(teamProfilesTable).select("*").order("id", { ascending: true });
+
+      if (cancelled) {
+        return;
+      }
+
+      if (error) {
+        console.warn("Supabase team_profiles load failed:", error.message);
+        hydratedRef.current = true;
+        return;
+      }
+
+      const remoteProfiles = (data ?? []).map((row) => normalizeProfileRow(row as TeamProfileRow));
+
+      if (remoteProfiles.length > 0) {
+        setProfiles(remoteProfiles);
+        hydratedRef.current = true;
+        return;
+      }
+
+      const { error: seedError } = await supabaseClient.from(teamProfilesTable).upsert(seedAccounts, {
+        onConflict: "id",
+      });
+
+      if (cancelled) {
+        return;
+      }
+
+      if (seedError) {
+        console.warn("Supabase team_profiles seed failed:", seedError.message);
+        hydratedRef.current = true;
+        return;
+      }
+
+      setProfiles(seedAccounts);
+      hydratedRef.current = true;
+    };
+
+    void syncTeamProfiles();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [setProfiles, supabaseClient]);
+
+  useEffect(() => {
+    if (!hydratedRef.current || !isSupabaseConfigured() || !supabaseClient) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const persistTeamProfiles = async () => {
+      const { error } = await supabaseClient.from(teamProfilesTable).upsert(
+        profiles.map((profile) => ({
+          ...profile,
+        })),
+        { onConflict: "id" },
+      );
+
+      if (cancelled) {
+        return;
+      }
+
+      if (error) {
+        console.warn("Supabase team_profiles save failed:", error.message);
+      }
+    };
+
+    void persistTeamProfiles();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [profiles, supabaseClient]);
+
+  return sharedState;
 }
 
 export function useCurrentTeamMember() {
@@ -61,4 +157,30 @@ export function useCurrentTeamMember() {
 
 export function getProfileDisplayName(member: EditableTeamMember | null | undefined) {
   return member?.name ?? "Usuário";
+}
+
+function normalizeProfileRow(row: TeamProfileRow) {
+  const id = typeof row.id === "string" ? Number(row.id) : row.id ?? 0;
+
+  return {
+    id: Number.isFinite(id) ? id : 0,
+    name: row.name ?? "",
+    role: row.role ?? "",
+    avatar: row.avatar ?? "",
+    specialty: row.specialty ?? "",
+    color: row.color ?? "#e50914",
+    stats: row.stats ?? {
+      postsCreated: 0,
+      avgEngagement: 0,
+      goalsCompleted: 0,
+      performance: 0,
+      punctuality: 0,
+    },
+    radar: row.radar ?? [],
+    monthlyPosts: row.monthlyPosts ?? [],
+    email: row.email ?? "",
+    password: row.password ?? "",
+    avatarUrl: row.avatarUrl ?? "",
+    bio: row.bio ?? "",
+  } satisfies EditableTeamMember;
 }

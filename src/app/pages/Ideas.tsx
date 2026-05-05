@@ -3,8 +3,8 @@ import { ChevronDown, Plus, Lightbulb, X } from "lucide-react";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "motion/react";
 import { ideas } from "../data/mockData";
-import { createStorageKey, useSharedState } from "../data/sharedState";
 import { useTeamProfiles } from "../data/profiles";
+import { useSupabaseSyncedListState } from "../data/supabaseSync";
 import { useThemeMode } from "../theme";
 import {
   ActionButton,
@@ -104,7 +104,7 @@ function MemberDropdown({
 export function IdeasPage() {
   const { isDark } = useThemeMode();
   const [teamMembers] = useTeamProfiles();
-  const [items, setItems] = useSharedState(createStorageKey("ideas"), ideas);
+  const [items, setItems] = useSupabaseSyncedListState({ key: "ideas", table: "ideas", fallback: ideas });
   const [isSparkOpen, setIsSparkOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<{ ideaId: number; ideaTitle: string } | null>(null);

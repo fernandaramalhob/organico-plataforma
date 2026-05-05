@@ -16,8 +16,8 @@ import {
   weekLabel,
   type CalendarEvent,
 } from "../data/mockData";
-import { useSharedState, createStorageKey } from "../data/sharedState";
 import { useTeamProfiles } from "../data/profiles";
+import { useSupabaseSyncedListState } from "../data/supabaseSync";
 import {
   ActionButton,
   ConfirmDialog,
@@ -394,7 +394,11 @@ export function CalendarPage() {
   const [view, setView] = useState<(typeof viewModes)[number]>("Semana");
   const [currentDate, setCurrentDate] = useState(referenceDate);
   const [teamMembers] = useTeamProfiles();
-  const [events, setEvents] = useSharedState(createStorageKey("calendar-events"), calendarEvents);
+  const [events, setEvents] = useSupabaseSyncedListState({
+    key: "calendar-events",
+    table: "calendar_events",
+    fallback: calendarEvents,
+  });
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [pendingDelete, setPendingDelete] = useState<CalendarEvent | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);

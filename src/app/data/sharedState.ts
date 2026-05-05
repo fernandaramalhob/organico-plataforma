@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 const sharedStateEvent = "great-organico-shared-state";
 
@@ -58,13 +58,13 @@ export function useSharedState<T>(key: string, fallback: T) {
     };
   }, [fallback, key]);
 
-  const setSharedValue = (update: Updater<T>) => {
+  const setSharedValue = useCallback((update: Updater<T>) => {
     setValue((current) => {
       const nextValue = typeof update === "function" ? (update as (current: T) => T)(current) : update;
       writeStoredValue(key, nextValue);
       return nextValue;
     });
-  };
+  }, [key]);
 
   return [value, setSharedValue] as const;
 }

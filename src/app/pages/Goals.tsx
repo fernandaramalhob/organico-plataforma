@@ -3,7 +3,7 @@ import { Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { goals } from "../data/mockData";
 import { useTeamProfiles } from "../data/profiles";
-import { createStorageKey, useSharedState } from "../data/sharedState";
+import { useSupabaseSyncedListState } from "../data/supabaseSync";
 import {
   ActionButton,
   ConfirmDialog,
@@ -34,7 +34,7 @@ function GoalProgressBar({ value, max, color }: { value: number; max: number; co
 export function GoalsPage() {
   const { isDark } = useThemeMode();
   const [teamMembers] = useTeamProfiles();
-  const [items, setItems] = useSharedState(createStorageKey("goals"), goals);
+  const [items, setItems] = useSupabaseSyncedListState({ key: "goals", table: "goals", fallback: goals });
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<{ goalId: number; goalName: string } | null>(null);
   const [form, setForm] = useState({
