@@ -386,7 +386,10 @@ export function RoundedDatePicker({
       </button>
 
       {open ? (
-        <div className="absolute right-0 top-full z-50 mt-3 w-[340px] overflow-hidden rounded-[1.75rem] border border-border/70 bg-background shadow-[0_24px_60px_rgba(15,23,42,0.16)] dark:border-border/60 dark:bg-card dark:shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
+        <div
+          className="absolute right-0 top-full z-50 mt-3 w-[340px] overflow-hidden overscroll-contain rounded-[1.75rem] border border-border/70 bg-background shadow-[0_24px_60px_rgba(15,23,42,0.16)] dark:border-border/60 dark:bg-card dark:shadow-[0_24px_60px_rgba(0,0,0,0.28)]"
+          onWheelCapture={(event) => event.stopPropagation()}
+        >
           <div className="flex items-center justify-between border-b border-border/60 px-4 py-4">
             <button
               type="button"
@@ -523,7 +526,10 @@ export function RoundedTimePicker({
       </button>
 
       {open ? (
-        <div className="absolute right-0 top-full z-50 mt-3 w-[320px] overflow-hidden rounded-[1.75rem] border border-border/70 bg-background shadow-[0_24px_60px_rgba(15,23,42,0.16)] dark:border-border/60 dark:bg-card dark:shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
+        <div
+          className="absolute right-0 top-full z-50 mt-3 w-[320px] overflow-hidden overscroll-contain rounded-[1.75rem] border border-border/70 bg-background shadow-[0_24px_60px_rgba(15,23,42,0.16)] dark:border-border/60 dark:bg-card dark:shadow-[0_24px_60px_rgba(0,0,0,0.28)]"
+          onWheelCapture={(event) => event.stopPropagation()}
+        >
           <div className="border-b border-border/60 px-4 py-4 text-center">
             <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Selecionar hora</p>
             <p className="mt-1 text-sm font-semibold text-foreground">{`${selectedHour}:${selectedMinute}`}</p>
