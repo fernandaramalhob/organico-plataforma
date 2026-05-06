@@ -60,12 +60,12 @@ export function Sidebar({ onLogout }: { onLogout?: () => void }) {
 
       <aside
         className={cn(
-          "fixed left-0 top-0 z-40 flex h-screen w-[280px] flex-col border-r border-border/60 bg-sidebar/90 px-5 py-6 backdrop-blur-xl transition-transform duration-300 xl:translate-x-0",
+          "fixed left-0 top-0 z-40 flex h-screen w-[290px] flex-col bg-white px-5 py-6 backdrop-blur-xl transition-transform duration-300 xl:translate-x-0 dark:bg-[#fbfbfb]",
           open ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        <div className="mb-10 flex items-center px-1 pt-1">
-          <div className="inline-flex h-16 w-[210px] items-center justify-start overflow-hidden">
+        <div className="mb-12 flex items-center px-1 pt-1">
+          <div className="inline-flex h-[74px] w-[220px] items-center justify-start overflow-hidden">
             <img
               src="/great-logo.svg"
               alt="Great Orgânico"
@@ -84,36 +84,36 @@ export function Sidebar({ onLogout }: { onLogout?: () => void }) {
           </button>
         </div>
 
-        <nav className="flex-1 space-y-2">
+        <nav className="flex-1 space-y-2.5">
           {navigation.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
               className={({ isActive }) =>
                 cn(
-                  "flex items-center gap-4 rounded-full px-5 py-3.5 text-[15px] font-medium transition duration-200",
+                  "flex h-12 w-full items-center gap-4 rounded-full px-5 text-[15px] font-medium transition duration-200",
                   isActive
-                    ? "bg-[#d90404] text-white shadow-[0_14px_28px_rgba(217,4,4,0.22)]"
-                    : "text-slate-700 hover:bg-black/5 hover:text-slate-900 dark:text-muted-foreground dark:hover:bg-white/6 dark:hover:text-foreground",
+                    ? "bg-[#d90404] text-white shadow-[0_14px_28px_rgba(217,4,4,0.18)]"
+                    : "text-slate-700 hover:bg-black/5 hover:text-slate-900",
                 )
               }
             >
-              <Icon className="h-4.5 w-4.5 shrink-0" />
+              <Icon className="h-[17px] w-[17px] shrink-0" />
               {label}
             </NavLink>
           ))}
         </nav>
 
-        <div className="mt-8 border-t border-border/60 pt-6 dark:border-white/10">
-          <div className="space-y-2">
+        <div className="mt-auto space-y-3 pb-2 pt-10">
+          <div className="space-y-3">
             <NavLink
               to="/settings"
               className={({ isActive }) =>
                 cn(
                   "flex items-center gap-4 rounded-xl px-2 py-3 text-[15px] font-medium transition",
                   isActive
-                    ? "text-foreground"
-                    : "text-slate-700 hover:text-slate-900 dark:text-muted-foreground dark:hover:text-foreground",
+                    ? "text-slate-900"
+                    : "text-slate-700 hover:text-slate-900",
                 )
               }
             >

@@ -1,5 +1,5 @@
-<svg width="560" height="180" viewBox="0 0 560 180" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Great Orgânico">
-  <g transform="translate(22 22)">
+<svg width="360" height="110" viewBox="0 0 360 110" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Great Orgânico">
+  <g transform="translate(4 6)">
     <path
       d="M61 6L109 33V87L61 114L13 87V33L61 6Z"
       stroke="#ff1a12"
@@ -20,20 +20,20 @@
     />
 
     <text
-      x="146"
-      y="72"
+      x="118"
+      y="60"
       fill="#111111"
       font-family="Arial, Helvetica, sans-serif"
-      font-size="35"
+      font-size="30"
       font-weight="800"
-      letter-spacing="4"
+      letter-spacing="3.5"
     >GREAT</text>
     <text
-      x="146"
-      y="108"
+      x="118"
+      y="92"
       fill="#111111"
       font-family="Arial, Helvetica, sans-serif"
-      font-size="24"
+      font-size="20"
       font-weight="700"
       letter-spacing="3"
     >ORGÂNICO</text>
