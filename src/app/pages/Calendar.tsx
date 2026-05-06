@@ -616,11 +616,14 @@ export function CalendarPage() {
       return undefined;
     }
 
-    const previousOverflow = document.body.style.overflow;
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
     document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
 
     return () => {
-      document.body.style.overflow = previousOverflow;
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
     };
   }, [isCreateOpen, pendingDelete, selectedEvent]);
 
@@ -854,13 +857,15 @@ export function CalendarPage() {
       {selectedEvent ? (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4"
+          onWheelCapture={(event) => event.stopPropagation()}
           onClick={() => setSelectedEvent(null)}
         >
           <div
             className="w-full max-w-lg overflow-hidden rounded-[2.25rem] border border-border/60 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.18)] dark:border-white/8 dark:bg-card dark:shadow-[0_30px_80px_rgba(0,0,0,0.35)]"
+            onWheelCapture={(event) => event.stopPropagation()}
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="max-h-[88vh] overflow-y-auto p-6">
+            <div className="max-h-[88vh] overflow-y-auto overscroll-contain p-6">
               {(() => {
                 const responsibleIds = getEventResponsibleIds(selectedEvent);
                 const members = responsibleIds
@@ -956,13 +961,15 @@ export function CalendarPage() {
       {isCreateOpen ? (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4"
+          onWheelCapture={(event) => event.stopPropagation()}
           onClick={() => setIsCreateOpen(false)}
         >
           <div
             className="w-full max-w-2xl overflow-hidden rounded-[2.25rem] border border-border/60 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.18)] dark:border-white/8 dark:bg-card dark:shadow-[0_30px_80px_rgba(0,0,0,0.35)]"
+            onWheelCapture={(event) => event.stopPropagation()}
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="max-h-[88vh] overflow-y-auto p-6">
+            <div className="max-h-[88vh] overflow-y-auto overscroll-contain p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Novo Post</p>
