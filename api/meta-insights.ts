@@ -229,7 +229,19 @@ async function discoverInstagramAccount(version: string, token: string, requeste
   });
 
   const pages = pagesResponse.data ?? [];
+  if (pages.length === 0) {
+    throw new Error(
+      "O token não retornou nenhuma Página do Facebook. Verifique as permissões do token e confirme que o perfil está ligado a uma conta Business/Creator.",
+    );
+  }
+
   const candidatePages = requestedPageId ? pages.filter((page) => page.id === requestedPageId) : pages;
+
+  if (requestedPageId && candidatePages.length === 0) {
+    throw new Error(
+      "O META_IG_PAGE_ID configurado não apareceu entre as Páginas acessíveis por este token. Revise o ID ou limpe o campo em Configurações para usar a descoberta automática.",
+    );
+  }
 
   for (const page of candidatePages) {
     const pageDetails = await graphGet<PageDetails>(version, `/${page.id}`, token, {
@@ -248,7 +260,7 @@ async function discoverInstagramAccount(version: string, token: string, requeste
   }
 
   throw new Error(
-    "Nenhuma Página com conta Instagram profissional foi encontrada para este token. Conecte uma conta Business/Creator vinculada à Página.",
+    "Nenhuma Página com conta Instagram profissional foi encontrada para este token. Conecte uma conta Business/Creator vinculada à Página ou preencha META_IG_PAGE_ID / META_IG_USER_ID em Configurações.",
   );
 }
 

@@ -31,6 +31,7 @@ import {
   formatPercent,
   cn,
 } from "../components/ui";
+import { useMetaConfig } from "../data/metaConfig";
 import { useThemeMode } from "../theme";
 
 type LoadStatus = "loading" | "ready" | "error";
@@ -106,6 +107,7 @@ function LoadingState() {
 
 export function MetaInsightsPage() {
   const { isDark } = useThemeMode();
+  const [metaConfig] = useMetaConfig();
   const [period, setPeriod] = useState<MetaPeriod>("Mês");
   const [status, setStatus] = useState<LoadStatus>("loading");
   const [error, setError] = useState<string | null>(null);
@@ -113,12 +115,21 @@ export function MetaInsightsPage() {
 
   const loadMetaInsights = useCallback(async () => {
     const days = metaPeriodDays[period];
+    const params = new URLSearchParams({ days: String(days) });
+
+    if (metaConfig.pageId.trim()) {
+      params.set("pageId", metaConfig.pageId.trim());
+    }
+
+    if (metaConfig.instagramUserId.trim()) {
+      params.set("igUserId", metaConfig.instagramUserId.trim());
+    }
 
     setStatus("loading");
     setError(null);
 
     try {
-      const response = await fetch(`/api/meta-insights?days=${days}`, {
+      const response = await fetch(`/api/meta-insights?${params.toString()}`, {
         cache: "no-store",
       });
 
@@ -136,7 +147,7 @@ export function MetaInsightsPage() {
       setError(message);
       toast.error(message);
     }
-  }, [period]);
+  }, [metaConfig.instagramUserId, metaConfig.pageId, period]);
 
   useEffect(() => {
     void loadMetaInsights();
@@ -266,6 +277,10 @@ export function MetaInsightsPage() {
               </li>
             </ul>
             <p>Também é preciso que a conta Instagram seja Business ou Creator e esteja vinculada a uma Página do Facebook.</p>
+            <p>
+              Se você já souber os IDs corretos, preencha em <strong>Configurações</strong> para forçar a consulta da
+              Página certa.
+            </p>
           </div>
         </GlassPanel>
       ) : null}
