@@ -65,16 +65,12 @@ export function Sidebar({ onLogout }: { onLogout?: () => void }) {
         )}
       >
         <div className="mb-5 flex items-center gap-3 rounded-[1.75rem] border border-border/60 bg-background/80 px-3 py-3 shadow-[0_10px_24px_rgba(15,23,42,0.05)] dark:border-white/8 dark:bg-card/80">
-          <div className="inline-flex h-12 w-12 items-center justify-center overflow-hidden rounded-[1.25rem] bg-background">
+          <div className="inline-flex h-12 w-20 items-center justify-center overflow-hidden rounded-[1rem] bg-background px-1.5">
             <img
-              src="/great-logo.png"
+              src="/great-logo.svg"
               alt="Great Orgânico"
-              className="h-full w-full object-contain p-1.5"
+              className="h-full w-full object-contain"
             />
-          </div>
-          <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">Great Orgânico</p>
-            <p className="truncate text-sm text-muted-foreground">Plataforma operacional</p>
           </div>
         </div>
 

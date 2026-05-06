@@ -1,0 +1,61 @@
+<svg width="560" height="180" viewBox="0 0 560 180" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Great Orgânico">
+  <rect width="560" height="180" fill="white"/>
+  <g transform="translate(28 18)">
+    <path
+      d="M61 6L109 33V87L61 114L13 87V33L61 6Z"
+      stroke="#ff1a12"
+      stroke-width="10"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M61 29L87 44V76L61 91L35 76V44L61 29Z"
+      stroke="#ff1a12"
+      stroke-width="10"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M61 52L81 63V85L61 96L41 85V63L61 52Z"
+      stroke="#ff1a12"
+      stroke-width="10"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M113 66H208"
+      stroke="#111111"
+      stroke-width="12"
+      stroke-linecap="round"
+    />
+    <path
+      d="M208 66H260V112H232"
+      stroke="#111111"
+      stroke-width="12"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M232 112V82H188"
+      stroke="#111111"
+      stroke-width="12"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <text
+      x="144"
+      y="74"
+      fill="#111111"
+      font-family="Arial, Helvetica, sans-serif"
+      font-size="32"
+      font-weight="800"
+      letter-spacing="4"
+    >GREAT</text>
+    <text
+      x="143"
+      y="108"
+      fill="#111111"
+      font-family="Arial, Helvetica, sans-serif"
+      font-size="24"
+      font-weight="700"
+      letter-spacing="3"
+    >ORGÂNICO</text>
+  </g>
+</svg>
