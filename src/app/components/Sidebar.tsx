@@ -64,12 +64,12 @@ export function Sidebar({ onLogout }: { onLogout?: () => void }) {
           open ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        <div className="mb-5 flex items-center gap-3 rounded-[1.75rem] border border-border/60 bg-background/80 px-3 py-3 shadow-[0_10px_24px_rgba(15,23,42,0.05)] dark:border-white/8 dark:bg-card/80">
-          <div className="inline-flex h-12 w-20 items-center justify-center overflow-hidden rounded-[1rem] bg-background px-1.5">
+        <div className="mb-5 flex items-center px-1 py-1">
+          <div className="inline-flex h-14 w-[190px] items-center justify-start overflow-hidden">
             <img
               src="/great-logo.svg"
               alt="Great Orgânico"
-              className="h-full w-full object-contain"
+              className="h-full w-full object-contain object-left"
             />
           </div>
         </div>
