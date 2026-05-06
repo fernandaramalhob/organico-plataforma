@@ -38,22 +38,8 @@ export function TopBar({ onLogout }: { onLogout?: () => void }) {
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-sidebar/90 backdrop-blur-xl dark:border-white/8">
-      <div className="mx-auto grid w-full max-w-[1600px] gap-3 px-4 py-3 sm:px-6 lg:px-8 xl:grid-cols-[auto,1fr,auto] xl:items-center">
-        <NavLink to="/dashboard" className="flex min-w-0 items-center gap-3 rounded-full px-1 py-1 transition hover:bg-background/40">
-          <div className="inline-flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-background/80">
-            <img
-              src="/great-logo.png"
-              alt="Great Orgânico"
-              className="h-full w-full object-contain p-1.5"
-            />
-          </div>
-          <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">Great Orgânico</p>
-            <p className="truncate text-sm text-muted-foreground">Plataforma operacional</p>
-          </div>
-        </NavLink>
-
-        <nav className="flex items-center gap-2 overflow-x-auto pb-1 xl:justify-center xl:pb-0">
+      <div className="mx-auto flex w-full max-w-[1600px] items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
+        <nav className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto pb-1">
           {navigation.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
@@ -73,7 +59,7 @@ export function TopBar({ onLogout }: { onLogout?: () => void }) {
           ))}
         </nav>
 
-        <div className="flex items-center gap-2 xl:justify-end">
+        <div className="flex shrink-0 items-center gap-2">
           <button
             type="button"
             className="hidden shrink-0 items-center gap-2 rounded-full border border-dashed border-border/60 bg-background/20 px-4 py-2 text-sm font-medium text-muted-foreground transition hover:border-primary/25 hover:bg-background/50 hover:text-foreground xl:inline-flex"
