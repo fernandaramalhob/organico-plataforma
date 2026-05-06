@@ -616,34 +616,17 @@ export function CalendarPage() {
       return undefined;
     }
 
-    const scrollY = window.scrollY;
     const previousBodyStyle = {
-      position: document.body.style.position,
-      top: document.body.style.top,
-      left: document.body.style.left,
-      right: document.body.style.right,
-      width: document.body.style.width,
       overflow: document.body.style.overflow,
     };
     const previousHtmlOverflow = document.documentElement.style.overflow;
 
     document.documentElement.style.overflow = "hidden";
-    document.body.style.position = "fixed";
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.left = "0";
-    document.body.style.right = "0";
-    document.body.style.width = "100%";
     document.body.style.overflow = "hidden";
 
     return () => {
-      document.body.style.position = previousBodyStyle.position;
-      document.body.style.top = previousBodyStyle.top;
-      document.body.style.left = previousBodyStyle.left;
-      document.body.style.right = previousBodyStyle.right;
-      document.body.style.width = previousBodyStyle.width;
       document.body.style.overflow = previousBodyStyle.overflow;
       document.documentElement.style.overflow = previousHtmlOverflow;
-      window.scrollTo(0, scrollY);
     };
   }, [isCreateOpen, pendingDelete, selectedEvent]);
 
@@ -980,16 +963,24 @@ export function CalendarPage() {
 
       {isCreateOpen ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4"
-          onWheelCapture={(event) => event.stopPropagation()}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4 sm:p-6"
           onClick={() => setIsCreateOpen(false)}
+          onWheelCapture={(event) => {
+            if (event.target === event.currentTarget) {
+              event.preventDefault();
+            }
+          }}
+          onTouchMoveCapture={(event) => {
+            if (event.target === event.currentTarget) {
+              event.preventDefault();
+            }
+          }}
         >
           <div
-            className="w-full max-w-2xl overflow-hidden rounded-[2.25rem] border border-border/60 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.18)] dark:border-white/8 dark:bg-card dark:shadow-[0_30px_80px_rgba(0,0,0,0.35)]"
-            onWheelCapture={(event) => event.stopPropagation()}
+            className="flex w-full max-w-2xl max-h-[calc(100vh-48px)] flex-col overflow-hidden rounded-[2.25rem] border border-border/60 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.18)] dark:border-white/8 dark:bg-card dark:shadow-[0_30px_80px_rgba(0,0,0,0.35)]"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="max-h-[88vh] overflow-y-auto overscroll-contain p-6">
+            <div className="shrink-0 px-6 pb-0 pt-6 sm:px-8 sm:pt-8">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Novo Post</p>
@@ -1003,8 +994,10 @@ export function CalendarPage() {
                   <span className="text-lg leading-none">×</span>
                 </button>
               </div>
+            </div>
 
-              <div className="mt-6 grid gap-4 md:grid-cols-2">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-6 sm:px-8">
+              <div className="grid gap-4 md:grid-cols-2">
                 <label className="grid gap-2 md:col-span-2">
                   <span className="text-sm font-medium text-foreground">Título</span>
                   <input
@@ -1085,8 +1078,10 @@ export function CalendarPage() {
                   />
                 </label>
               </div>
+            </div>
 
-              <div className="mt-6 flex flex-wrap justify-end gap-3">
+            <div className="shrink-0 border-t border-border/60 bg-white/95 px-6 py-5 backdrop-blur dark:bg-card/95 sm:px-8">
+              <div className="flex flex-wrap justify-end gap-3">
                 <ActionButton variant="secondary" onClick={() => setIsCreateOpen(false)}>
                   Cancelar
                 </ActionButton>
