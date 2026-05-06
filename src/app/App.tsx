@@ -66,7 +66,7 @@ function AppShell({ onLogout }: { onLogout: () => void }) {
 
   return (
     <div
-      className="flex min-h-screen w-full text-foreground"
+      className="flex h-screen w-full overflow-hidden text-foreground"
       style={{
         background: isDark
           ? "radial-gradient(circle at top left, rgba(225,48,108,0.14), transparent 24%), radial-gradient(circle at top right, rgba(131,58,180,0.16), transparent 28%), linear-gradient(180deg, rgba(8,10,14,1) 0%, rgba(11,14,20,1) 100%)"
@@ -74,11 +74,11 @@ function AppShell({ onLogout }: { onLogout: () => void }) {
       }}
     >
       <Sidebar onLogout={onLogout} />
-      <div className="flex min-h-screen flex-1 flex-col">
+      <div className="flex min-h-0 flex-1 flex-col xl:ml-64">
         <TopBar onLogout={onLogout} />
-        <main className="relative z-10 flex-1 p-4 sm:p-6 xl:p-7">
+        <main className="relative z-10 min-h-0 flex-1 overflow-y-auto overscroll-contain scrollbar-hidden p-4 sm:p-6 xl:p-7" tabIndex={0}>
           <div
-            className="min-h-[calc(100vh-2rem)] overflow-visible rounded-[28px] border sm:min-h-[calc(100vh-3rem)] xl:min-h-[calc(100vh-3.5rem)]"
+            className="min-h-full overflow-visible rounded-[28px] border"
             style={{
               background: isDark
                 ? "linear-gradient(180deg, rgba(15,18,24,0.96), rgba(9,11,16,0.98))"

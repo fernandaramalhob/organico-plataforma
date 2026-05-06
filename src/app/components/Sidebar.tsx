@@ -62,7 +62,7 @@ export function Sidebar({ onLogout }: { onLogout?: () => void }) {
 
       <aside
         className={cn(
-          "fixed left-0 top-0 z-40 flex h-screen w-64 flex-col border-r border-border/60 bg-sidebar/90 p-4 backdrop-blur-xl transition-transform duration-300 xl:z-0 xl:static xl:translate-x-0",
+          "fixed left-0 top-0 z-40 flex h-screen w-64 flex-col border-r border-border/60 bg-sidebar/90 p-4 backdrop-blur-xl transition-transform duration-300 xl:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full",
         )}
       >
