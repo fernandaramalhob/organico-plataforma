@@ -29,7 +29,6 @@ const navigation = [
   { to: "/member/1", label: "Equipe", icon: Users },
   { to: "/history", label: "Histórico", icon: History },
   { to: "/reports", label: "Relatórios", icon: FileText },
-  { to: "/settings", label: "Configurações", icon: Settings },
 ];
 
 export function Sidebar({ onLogout }: { onLogout?: () => void }) {
