@@ -17,6 +17,7 @@ import {
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
+import { createPortal } from "react-dom";
 import { useEffect, useRef, useState, type CSSProperties, type PropsWithChildren, type ReactNode } from "react";
 import type { ContentType, PostFile, PostStatus } from "../data/mockData";
 import { statusColors, typeColors } from "../data/mockData";
@@ -327,6 +328,68 @@ function formatDateLabel(value: string) {
   }).format(date);
 }
 
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function useFloatingPopoverPosition({
+  open,
+  anchorRef,
+  popoverRef,
+  width,
+  estimatedHeight,
+}: {
+  open: boolean;
+  anchorRef: { current: HTMLElement | null };
+  popoverRef: { current: HTMLElement | null };
+  width: number;
+  estimatedHeight: number;
+}) {
+  const [position, setPosition] = useState<{ top: number; left: number; width: number } | null>(null);
+
+  useEffect(() => {
+    if (!open) {
+      setPosition(null);
+      return undefined;
+    }
+
+    const updatePosition = () => {
+      const anchorNode = anchorRef.current;
+      if (!anchorNode || typeof window === "undefined") {
+        return;
+      }
+
+      const rect = anchorNode.getBoundingClientRect();
+      const viewportPadding = 12;
+      const popoverWidth = Math.min(Math.max(width, rect.width), window.innerWidth - viewportPadding * 2);
+      const popoverNode = popoverRef.current;
+      const measuredHeight = popoverNode?.offsetHeight ?? estimatedHeight;
+      const spaceBelow = window.innerHeight - rect.bottom - viewportPadding;
+      const spaceAbove = rect.top - viewportPadding;
+      const openUp = spaceBelow < measuredHeight && spaceAbove > spaceBelow;
+      const left = clamp(rect.right - popoverWidth, viewportPadding, window.innerWidth - popoverWidth - viewportPadding);
+      const top = openUp ? rect.top - measuredHeight - 12 : rect.bottom + 12;
+
+      setPosition({
+        top: clamp(top, viewportPadding, window.innerHeight - measuredHeight - viewportPadding),
+        left,
+        width: popoverWidth,
+      });
+    };
+
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [anchorRef, estimatedHeight, open, popoverRef, width]);
+
+  return position;
+}
+
 export function RoundedDatePicker({
   value,
   onChange,
@@ -339,7 +402,6 @@ export function RoundedDatePicker({
   const rootRef = useRef<HTMLDivElement | null>(null);
   const popoverRef = useRef<HTMLDivElement | null>(null);
   const [open, setOpen] = useState(false);
-  const [placement, setPlacement] = useState<"bottom" | "top">("bottom");
   const [cursor, setCursor] = useState(() => parseDateKey(value) ?? new Date());
 
   useEffect(() => {
@@ -355,7 +417,11 @@ export function RoundedDatePicker({
     }
 
     const handlePointerDown = (event: MouseEvent) => {
-      if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const isInsideTrigger = rootRef.current?.contains(target);
+      const isInsidePopover = popoverRef.current?.contains(target);
+
+      if (!isInsideTrigger && !isInsidePopover) {
         setOpen(false);
       }
     };
@@ -364,35 +430,13 @@ export function RoundedDatePicker({
     return () => window.removeEventListener("mousedown", handlePointerDown);
   }, [open]);
 
-  useEffect(() => {
-    if (!open) {
-      return undefined;
-    }
-
-    const updatePlacement = () => {
-      const rootNode = rootRef.current;
-      const popoverNode = popoverRef.current;
-      if (!rootNode || !popoverNode) {
-        return;
-      }
-
-      const rootRect = rootNode.getBoundingClientRect();
-      const estimatedHeight = popoverNode.offsetHeight || 420;
-      const spaceBelow = window.innerHeight - rootRect.bottom - 16;
-      const spaceAbove = rootRect.top - 16;
-
-      setPlacement(spaceBelow < estimatedHeight && spaceAbove > spaceBelow ? "top" : "bottom");
-    };
-
-    updatePlacement();
-    window.addEventListener("resize", updatePlacement);
-    window.addEventListener("scroll", updatePlacement, true);
-
-    return () => {
-      window.removeEventListener("resize", updatePlacement);
-      window.removeEventListener("scroll", updatePlacement, true);
-    };
-  }, [open]);
+  const popoverPosition = useFloatingPopoverPosition({
+    open,
+    anchorRef: rootRef,
+    popoverRef,
+    width: 340,
+    estimatedHeight: 420,
+  });
 
   const todayKey = formatDateKey(new Date());
   const selectedKey = value || todayKey;
@@ -417,15 +461,18 @@ export function RoundedDatePicker({
         <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition ${open ? "rotate-180" : ""}`} />
       </button>
 
-      {open ? (
-        <div
-          ref={popoverRef}
-          className={cn(
-            "absolute right-0 z-50 w-[340px] overflow-hidden overscroll-contain rounded-[1.75rem] border border-border/70 bg-background shadow-[0_24px_60px_rgba(15,23,42,0.16)] dark:border-border/60 dark:bg-card dark:shadow-[0_24px_60px_rgba(0,0,0,0.28)]",
-            placement === "bottom" ? "top-full mt-3" : "bottom-full mb-3",
-          )}
-          onWheelCapture={(event) => event.stopPropagation()}
-        >
+      {open && popoverPosition ? (
+            <div
+              ref={popoverRef}
+              className="z-[9999] overflow-hidden overscroll-contain rounded-[1.75rem] border border-border/70 bg-background shadow-[0_24px_60px_rgba(15,23,42,0.16)] dark:border-border/60 dark:bg-card dark:shadow-[0_24px_60px_rgba(0,0,0,0.28)]"
+              style={{
+                position: "fixed",
+                top: popoverPosition.top,
+                left: popoverPosition.left,
+                width: popoverPosition.width,
+              }}
+              onWheelCapture={(event) => event.stopPropagation()}
+            >
           <div className="flex items-center justify-between border-b border-border/60 px-4 py-4">
             <button
               type="button"
@@ -525,6 +572,7 @@ export function RoundedTimePicker({
   const selectedHour = hours.includes(hour) ? hour : "09";
   const selectedMinute = minutes.includes(minute) ? minute : "00";
   const rootRef = useRef<HTMLDivElement | null>(null);
+  const popoverRef = useRef<HTMLDivElement | null>(null);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -533,7 +581,11 @@ export function RoundedTimePicker({
     }
 
     const handlePointerDown = (event: MouseEvent) => {
-      if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const isInsideTrigger = rootRef.current?.contains(target);
+      const isInsidePopover = popoverRef.current?.contains(target);
+
+      if (!isInsideTrigger && !isInsidePopover) {
         setOpen(false);
       }
     };
@@ -541,6 +593,14 @@ export function RoundedTimePicker({
     window.addEventListener("mousedown", handlePointerDown);
     return () => window.removeEventListener("mousedown", handlePointerDown);
   }, [open]);
+
+  const popoverPosition = useFloatingPopoverPosition({
+    open,
+    anchorRef: rootRef,
+    popoverRef,
+    width: 320,
+    estimatedHeight: 320,
+  });
 
   return (
     <div ref={rootRef} className="relative">
@@ -561,79 +621,89 @@ export function RoundedTimePicker({
         <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition ${open ? "rotate-180" : ""}`} />
       </button>
 
-      {open ? (
-        <div
-          className="absolute right-0 top-full z-50 mt-3 w-[320px] overflow-hidden overscroll-contain rounded-[1.75rem] border border-border/70 bg-background shadow-[0_24px_60px_rgba(15,23,42,0.16)] dark:border-border/60 dark:bg-card dark:shadow-[0_24px_60px_rgba(0,0,0,0.28)]"
-          onWheelCapture={(event) => event.stopPropagation()}
-        >
-          <div className="border-b border-border/60 px-4 py-4 text-center">
-            <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Selecionar hora</p>
-            <p className="mt-1 text-sm font-semibold text-foreground">{`${selectedHour}:${selectedMinute}`}</p>
-          </div>
-          <div className="grid grid-cols-2 gap-0 p-3">
-            <div className="max-h-56 overflow-auto pr-1">
-              <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Hora</p>
-              <div className="space-y-1">
-                {hours.map((item) => {
-                  const active = item === selectedHour;
-                  return (
-                    <button
-                      key={item}
-                      type="button"
-                      onClick={() => onChange(`${item}:${selectedMinute}`)}
-                      className="flex w-full items-center justify-between rounded-full px-3 py-2 text-sm transition hover:bg-muted"
-                      style={{
-                        backgroundColor: active ? "rgb(var(--muted) / 1)" : undefined,
-                      }}
-                    >
-                      <span className="font-medium text-foreground">{item}</span>
-                      {active ? <span className="text-xs font-semibold text-muted-foreground">Ativo</span> : null}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-            <div className="max-h-56 overflow-auto pl-1">
-              <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Minuto</p>
-              <div className="space-y-1">
-                {minutes.map((item) => {
-                  const active = item === selectedMinute;
-                  return (
-                    <button
-                      key={item}
-                      type="button"
-                      onClick={() => onChange(`${selectedHour}:${item}`)}
-                      className="flex w-full items-center justify-between rounded-full px-3 py-2 text-sm transition hover:bg-muted"
-                      style={{
-                        backgroundColor: active ? "rgb(var(--muted) / 1)" : undefined,
-                      }}
-                    >
-                      <span className="font-medium text-foreground">{item}</span>
-                      {active ? <span className="text-xs font-semibold text-muted-foreground">Ativo</span> : null}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center justify-between border-t border-border/60 px-4 py-3">
-            <button
-              type="button"
-              onClick={() => onChange("09:00")}
-              className="rounded-full border border-border/60 bg-muted/40 px-3 py-2 text-xs font-semibold text-foreground transition hover:bg-muted/70"
+      {open && popoverPosition
+        ? createPortal(
+            <div
+              ref={popoverRef}
+              className="z-[9999] overflow-hidden overscroll-contain rounded-[1.75rem] border border-border/70 bg-background shadow-[0_24px_60px_rgba(15,23,42,0.16)] dark:border-border/60 dark:bg-card dark:shadow-[0_24px_60px_rgba(0,0,0,0.28)]"
+              style={{
+                position: "fixed",
+                top: popoverPosition.top,
+                left: popoverPosition.left,
+                width: popoverPosition.width,
+              }}
+              onWheelCapture={(event) => event.stopPropagation()}
             >
-              09:00
-            </button>
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              className="rounded-full border border-border/60 bg-background px-3 py-2 text-xs font-semibold text-muted-foreground transition hover:text-foreground dark:bg-card/80"
-            >
-              Fechar
-            </button>
-          </div>
-        </div>
-      ) : null}
+              <div className="border-b border-border/60 px-4 py-4 text-center">
+                <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Selecionar hora</p>
+                <p className="mt-1 text-sm font-semibold text-foreground">{`${selectedHour}:${selectedMinute}`}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-0 p-3">
+                <div className="max-h-56 overflow-auto pr-1">
+                  <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Hora</p>
+                  <div className="space-y-1">
+                    {hours.map((item) => {
+                      const active = item === selectedHour;
+                      return (
+                        <button
+                          key={item}
+                          type="button"
+                          onClick={() => onChange(`${item}:${selectedMinute}`)}
+                          className="flex w-full items-center justify-between rounded-full px-3 py-2 text-sm transition hover:bg-muted"
+                          style={{
+                            backgroundColor: active ? "rgb(var(--muted) / 1)" : undefined,
+                          }}
+                        >
+                          <span className="font-medium text-foreground">{item}</span>
+                          {active ? <span className="text-xs font-semibold text-muted-foreground">Ativo</span> : null}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="max-h-56 overflow-auto pl-1">
+                  <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Minuto</p>
+                  <div className="space-y-1">
+                    {minutes.map((item) => {
+                      const active = item === selectedMinute;
+                      return (
+                        <button
+                          key={item}
+                          type="button"
+                          onClick={() => onChange(`${selectedHour}:${item}`)}
+                          className="flex w-full items-center justify-between rounded-full px-3 py-2 text-sm transition hover:bg-muted"
+                          style={{
+                            backgroundColor: active ? "rgb(var(--muted) / 1)" : undefined,
+                          }}
+                        >
+                          <span className="font-medium text-foreground">{item}</span>
+                          {active ? <span className="text-xs font-semibold text-muted-foreground">Ativo</span> : null}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between border-t border-border/60 px-4 py-3">
+                <button
+                  type="button"
+                  onClick={() => onChange("09:00")}
+                  className="rounded-full border border-border/60 bg-muted/40 px-3 py-2 text-xs font-semibold text-foreground transition hover:bg-muted/70"
+                >
+                  09:00
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="rounded-full border border-border/60 bg-background px-3 py-2 text-xs font-semibold text-muted-foreground transition hover:text-foreground dark:bg-card/80"
+                >
+                  Fechar
+                </button>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }

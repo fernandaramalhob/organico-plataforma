@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useDrag, useDrop } from "react-dnd";
 import {
   ChevronLeft,
@@ -160,6 +161,68 @@ function getUniqueIds(values: number[]) {
   return values.filter((value, index, array) => array.indexOf(value) === index);
 }
 
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function useFloatingPopoverPosition({
+  open,
+  anchorRef,
+  popoverRef,
+  width,
+  estimatedHeight,
+}: {
+  open: boolean;
+  anchorRef: { current: HTMLElement | null };
+  popoverRef: { current: HTMLElement | null };
+  width: number;
+  estimatedHeight: number;
+}) {
+  const [position, setPosition] = useState<{ top: number; left: number; width: number } | null>(null);
+
+  useEffect(() => {
+    if (!open) {
+      setPosition(null);
+      return undefined;
+    }
+
+    const updatePosition = () => {
+      const anchorNode = anchorRef.current;
+      if (!anchorNode || typeof window === "undefined") {
+        return;
+      }
+
+      const rect = anchorNode.getBoundingClientRect();
+      const viewportPadding = 12;
+      const popoverWidth = Math.min(Math.max(width, rect.width), window.innerWidth - viewportPadding * 2);
+      const popoverNode = popoverRef.current;
+      const measuredHeight = popoverNode?.offsetHeight ?? estimatedHeight;
+      const spaceBelow = window.innerHeight - rect.bottom - viewportPadding;
+      const spaceAbove = rect.top - viewportPadding;
+      const openUp = spaceBelow < measuredHeight && spaceAbove > spaceBelow;
+      const left = clamp(rect.right - popoverWidth, viewportPadding, window.innerWidth - popoverWidth - viewportPadding);
+      const top = openUp ? rect.top - measuredHeight - 12 : rect.bottom + 12;
+
+      setPosition({
+        top: clamp(top, viewportPadding, window.innerHeight - measuredHeight - viewportPadding),
+        left,
+        width: popoverWidth,
+      });
+    };
+
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [anchorRef, estimatedHeight, open, popoverRef, width]);
+
+  return position;
+}
+
 function getEventResponsibleIds(event: CalendarEvent) {
   const ids = getUniqueIds(event.responsibleIds ?? []);
   if (ids.length > 0) {
@@ -253,13 +316,18 @@ function ResponsibleMultiPicker({
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
+  const popoverRef = useRef<HTMLDivElement | null>(null);
   const selectedIds = getUniqueIds(value);
   const selectedMembers = teamMembers.filter((member) => selectedIds.includes(member.id));
   const firstMember = selectedMembers[0] ?? teamMembers[0];
 
   useEffect(() => {
     const handlePointerDown = (event: MouseEvent) => {
-      if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const isInsideTrigger = rootRef.current?.contains(target);
+      const isInsidePopover = popoverRef.current?.contains(target);
+
+      if (!isInsideTrigger && !isInsidePopover) {
         setOpen(false);
       }
     };
@@ -267,6 +335,14 @@ function ResponsibleMultiPicker({
     document.addEventListener("mousedown", handlePointerDown);
     return () => document.removeEventListener("mousedown", handlePointerDown);
   }, []);
+
+  const popoverPosition = useFloatingPopoverPosition({
+    open,
+    anchorRef: rootRef,
+    popoverRef,
+    width: 360,
+    estimatedHeight: 360,
+  });
 
   return (
     <div ref={rootRef} className="relative">
@@ -291,8 +367,18 @@ function ResponsibleMultiPicker({
         <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition ${open ? "rotate-180" : ""}`} />
       </button>
 
-      {open ? (
-        <div className="absolute left-0 top-full z-50 mt-2 w-full overflow-hidden rounded-[1.75rem] border border-border/70 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.16)] dark:border-border/60 dark:bg-card dark:shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
+      {open && popoverPosition ? createPortal(
+        <div
+          ref={popoverRef}
+          className="z-[9999] overflow-hidden rounded-[1.75rem] border border-border/70 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.16)] dark:border-border/60 dark:bg-card dark:shadow-[0_24px_60px_rgba(0,0,0,0.28)]"
+          style={{
+            position: "fixed",
+            top: popoverPosition.top,
+            left: popoverPosition.left,
+            width: popoverPosition.width,
+          }}
+          onWheelCapture={(event) => event.stopPropagation()}
+        >
           <div className="border-b border-border/60 px-4 py-4">
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Responsáveis</p>
             <p className="mt-1 text-sm text-muted-foreground">Selecione quantos quiser para esta tarefa.</p>
@@ -349,7 +435,8 @@ function ResponsibleMultiPicker({
               Fechar
             </button>
           </div>
-        </div>
+        </div>,
+        document.body,
       ) : null}
     </div>
   );
@@ -977,7 +1064,7 @@ export function CalendarPage() {
           }}
         >
           <div
-            className="flex w-full max-w-2xl max-h-[calc(100vh-48px)] flex-col overflow-hidden rounded-[2.25rem] border border-border/60 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.18)] dark:border-white/8 dark:bg-card dark:shadow-[0_30px_80px_rgba(0,0,0,0.35)]"
+            className="flex w-[min(92vw,760px)] max-h-[calc(100vh-48px)] flex-col overflow-visible rounded-[2.25rem] border border-border/60 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.18)] dark:border-white/8 dark:bg-card dark:shadow-[0_30px_80px_rgba(0,0,0,0.35)]"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="shrink-0 px-6 pb-0 pt-6 sm:px-8 sm:pt-8">
@@ -996,7 +1083,7 @@ export function CalendarPage() {
               </div>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-6 sm:px-8">
+            <div className="min-h-0 flex-1 overflow-y-auto overflow-x-visible overscroll-contain px-6 py-6 sm:px-8">
               <div className="grid gap-4 md:grid-cols-2">
                 <label className="grid gap-2 md:col-span-2">
                   <span className="text-sm font-medium text-foreground">Título</span>
