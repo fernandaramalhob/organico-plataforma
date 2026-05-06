@@ -1,36 +1,13 @@
 import { NavLink } from "react-router-dom";
 import {
-  Calendar,
-  Camera,
-  CheckCircle2,
-  FileText,
-  History,
-  LayoutDashboard,
-  Lightbulb,
   LogOut,
   MoonStar,
-  Target,
-  TrendingUp,
-  Users,
   Search,
   SunMedium,
 } from "lucide-react";
-import { Avatar, cn } from "./ui";
+import { Avatar } from "./ui";
 import { useCurrentTeamMember } from "../data/profiles";
 import { useThemeMode } from "../theme";
-
-const navigation = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/meta-insights", label: "Meta Insights", icon: Target },
-  { to: "/calendar", label: "Calendário", icon: Calendar },
-  { to: "/insights", label: "Insights", icon: TrendingUp },
-  { to: "/goals", label: "Metas", icon: CheckCircle2 },
-  { to: "/stories", label: "Stories", icon: Camera },
-  { to: "/ideas", label: "Ideias", icon: Lightbulb },
-  { to: "/member/1", label: "Equipe", icon: Users },
-  { to: "/history", label: "Histórico", icon: History },
-  { to: "/reports", label: "Relatórios", icon: FileText },
-];
 
 export function TopBar({ onLogout }: { onLogout?: () => void }) {
   const { isDark, setTheme } = useThemeMode();
@@ -38,27 +15,7 @@ export function TopBar({ onLogout }: { onLogout?: () => void }) {
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-sidebar/90 backdrop-blur-xl dark:border-white/8">
-      <div className="mx-auto flex w-full max-w-[1600px] items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
-        <nav className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto pb-1">
-          {navigation.map(({ to, label, icon: Icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              className={({ isActive }) =>
-                cn(
-                  "inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition duration-200",
-                  isActive
-                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
-                    : "text-muted-foreground hover:bg-background/50 hover:text-foreground",
-                )
-              }
-            >
-              <Icon className="h-4 w-4" />
-              {label}
-            </NavLink>
-          ))}
-        </nav>
-
+      <div className="mx-auto flex w-full max-w-[1600px] items-center justify-end gap-2 px-4 py-3 sm:px-6 lg:px-8">
         <div className="flex shrink-0 items-center gap-2">
           <button
             type="button"
