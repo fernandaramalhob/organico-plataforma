@@ -18,6 +18,7 @@ import {
   type CalendarEvent,
 } from "../data/mockData";
 import { useTeamProfiles } from "../data/profiles";
+import { useCurrentTeamMember } from "../data/profiles";
 import { useSupabaseSyncedListState } from "../data/supabaseSync";
 import { matchesTeamScope, useTeamScope } from "../data/teamScope";
 import {
@@ -29,12 +30,13 @@ import {
   PageTransition,
   RoundedDatePicker,
   RoundedTimePicker,
+  MemberChip,
   cn,
 } from "../components/ui";
 
 const viewModes = ["Dia", "Semana", "Mês"] as const;
 const dragType = "calendar-event";
-const referenceDate = new Date("2026-04-30T12:00:00");
+const getTodayDate = () => new Date();
 const weekHeaderLabels = ["DOM.", "SEG.", "TER.", "QUA.", "QUI.", "SEX.", "SÁB."];
 
 function addDays(date: Date, value: number) {
@@ -232,6 +234,18 @@ function getEventResponsibleIds(event: CalendarEvent) {
 
   return event.responsibleId ? [event.responsibleId] : [];
 }
+
+type CalendarEventFormState = {
+  title: string;
+  description: string;
+  type: CalendarEvent["type"];
+  status: CalendarEvent["status"];
+  date: string;
+  time: string;
+  responsibleId: number;
+  responsibleIds: number[];
+  addedById?: number;
+};
 
 function CalendarSlot({
   date,
@@ -446,7 +460,7 @@ function ResponsibleMultiPicker({
 function MiniMonth({ date }: { date: Date }) {
   const monthCells = buildMonthCells(date);
   const currentMonth = date.getMonth();
-  const currentDay = formatDateKey(referenceDate);
+  const currentDay = formatDateKey(getTodayDate());
 
   return (
     <div className="rounded-[1.75rem] border border-border/60 bg-white p-4 shadow-sm dark:bg-card/95 dark:shadow-[0_18px_36px_rgba(0,0,0,0.18)]">
@@ -537,8 +551,10 @@ function SideAgenda({
 
 export function CalendarPage() {
   const [view, setView] = useState<(typeof viewModes)[number]>("Semana");
-  const [currentDate, setCurrentDate] = useState(referenceDate);
+  const [currentDate, setCurrentDate] = useState(() => getTodayDate());
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [teamMembers] = useTeamProfiles();
+  const { member: currentMember } = useCurrentTeamMember();
   const [teamScope] = useTeamScope();
   const [events, setEvents] = useSupabaseSyncedListState({
     key: "calendar-events",
@@ -546,6 +562,7 @@ export function CalendarPage() {
     fallback: calendarEvents,
   });
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [eventForm, setEventForm] = useState<CalendarEventFormState | null>(null);
   const [pendingDelete, setPendingDelete] = useState<CalendarEvent | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState({
@@ -553,10 +570,11 @@ export function CalendarPage() {
     description: "",
     type: "Reels" as CalendarEvent["type"],
     status: "Agendado" as CalendarEvent["status"],
-    date: formatDateKey(referenceDate),
+    date: formatDateKey(getTodayDate()),
     time: "09:00",
     responsibleId: teamMembers[0]?.id ?? 1,
     responsibleIds: [teamMembers[0]?.id ?? 1],
+    addedById: currentMember?.id ?? teamMembers[0]?.id ?? 1,
   });
 
   const weekDates = useMemo(() => Array.from({ length: 7 }, (_, index) => addDays(startOfWeek(currentDate), index)), [currentDate]);
@@ -591,7 +609,25 @@ export function CalendarPage() {
     setEvents((previous) =>
       previous.map((event) => (event.id === eventId ? { ...event, date: nextDate, time: nextTime } : event)),
     );
+    setSelectedEvent((current) => (current?.id === eventId ? { ...current, date: nextDate, time: nextTime } : current));
+    setEventForm((current) => (current && selectedEvent?.id === eventId ? { ...current, date: nextDate, time: nextTime } : current));
     toast.success("Post reagendado com sucesso.");
+  };
+
+  const handleOpenCreateModal = () => {
+    setCreateForm((previous) => ({
+      ...previous,
+      title: "",
+      description: "",
+      type: "Reels" as CalendarEvent["type"],
+      status: "Agendado" as CalendarEvent["status"],
+      date: formatDateKey(getTodayDate()),
+      time: "09:00",
+      responsibleId: teamMembers[0]?.id ?? previous.responsibleId,
+      responsibleIds: [teamMembers[0]?.id ?? previous.responsibleId],
+      addedById: currentMember?.id ?? teamMembers[0]?.id ?? previous.addedById,
+    }));
+    setIsCreateOpen(true);
   };
 
   const handleDuplicateEvent = () => {
@@ -610,6 +646,49 @@ export function CalendarPage() {
 
     setEvents((previous) => [...previous, duplicatedEvent]);
     toast.success("Tarefa duplicada com sucesso.");
+  };
+
+  const handleSaveEvent = () => {
+    if (!selectedEvent || !eventForm) {
+      return;
+    }
+
+    if (!eventForm.title.trim() || !eventForm.description.trim()) {
+      toast.error("Preencha título e descrição.");
+      return;
+    }
+
+    const nextResponsibleIds = getUniqueIds(
+      eventForm.responsibleIds.length > 0 ? eventForm.responsibleIds : [eventForm.responsibleId],
+    );
+
+    const updatedEvent: CalendarEvent = {
+      ...selectedEvent,
+      title: eventForm.title.trim(),
+      description: eventForm.description.trim(),
+      type: eventForm.type,
+      status: eventForm.status,
+      date: eventForm.date,
+      time: eventForm.time,
+      responsibleId: nextResponsibleIds[0] ?? eventForm.responsibleId,
+      responsibleIds: nextResponsibleIds,
+      addedById: eventForm.addedById,
+    };
+
+    setEvents((previous) => previous.map((event) => (event.id === selectedEvent.id ? updatedEvent : event)));
+    setSelectedEvent(updatedEvent);
+    setEventForm({
+      title: updatedEvent.title,
+      description: updatedEvent.description,
+      type: updatedEvent.type,
+      status: updatedEvent.status,
+      date: updatedEvent.date,
+      time: updatedEvent.time,
+      responsibleId: updatedEvent.responsibleId,
+      responsibleIds: updatedEvent.responsibleIds?.length ? updatedEvent.responsibleIds : [updatedEvent.responsibleId],
+      addedById: updatedEvent.addedById,
+    });
+    toast.success("Tarefa atualizada com sucesso.");
   };
 
   const handleDeleteEvent = (eventId: number) => {
@@ -647,6 +726,7 @@ export function CalendarPage() {
       description: "",
       responsibleId: teamMembers[0]?.id ?? previous.responsibleId,
       responsibleIds: [teamMembers[0]?.id ?? previous.responsibleId],
+      addedById: currentMember?.id ?? previous.addedById,
     }));
     setIsCreateOpen(true);
   };
@@ -660,19 +740,20 @@ export function CalendarPage() {
     const nextId = Math.max(...events.map((event) => event.id), 0) + 1;
     setEvents((previous) => [
       ...previous,
-      {
-        id: nextId,
-        title: createForm.title.trim(),
-        description: createForm.description.trim(),
-        type: createForm.type,
-        responsibleId: createForm.responsibleIds[0] ?? createForm.responsibleId,
-        responsibleIds: getUniqueIds(
-          createForm.responsibleIds.length > 0 ? createForm.responsibleIds : [createForm.responsibleId],
-        ),
-        status: createForm.status,
-        date: createForm.date,
-        time: createForm.time,
-      },
+        {
+          id: nextId,
+          title: createForm.title.trim(),
+          description: createForm.description.trim(),
+          type: createForm.type,
+          responsibleId: createForm.responsibleIds[0] ?? createForm.responsibleId,
+          responsibleIds: getUniqueIds(
+            createForm.responsibleIds.length > 0 ? createForm.responsibleIds : [createForm.responsibleId],
+          ),
+          addedById: createForm.addedById,
+          status: createForm.status,
+          date: createForm.date,
+          time: createForm.time,
+        },
     ]);
     setIsCreateOpen(false);
     toast.success("Novo post criado com sucesso.");
@@ -680,8 +761,21 @@ export function CalendarPage() {
 
   useEffect(() => {
     if (!selectedEvent) {
+      setEventForm(null);
       return undefined;
     }
+
+    setEventForm({
+      title: selectedEvent.title,
+      description: selectedEvent.description,
+      type: selectedEvent.type,
+      status: selectedEvent.status,
+      date: selectedEvent.date,
+      time: selectedEvent.time,
+      responsibleId: selectedEvent.responsibleId,
+      responsibleIds: selectedEvent.responsibleIds?.length ? selectedEvent.responsibleIds : [selectedEvent.responsibleId],
+      addedById: selectedEvent.addedById ?? currentMember?.id ?? teamMembers[0]?.id,
+    });
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -691,7 +785,7 @@ export function CalendarPage() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedEvent]);
+  }, [currentMember, selectedEvent, teamMembers]);
 
   useEffect(() => {
     if (!isCreateOpen) {
@@ -732,41 +826,46 @@ export function CalendarPage() {
   return (
     <PageTransition>
       <PageHeader
-        eyebrow="Planner"
-        title="Calendário editorial com visão operacional"
-        description="Uma experiência mais próxima do Google Calendar, com visão semanal dominante, agenda lateral e slots rápidos de reagendamento."
+        title="Calendário Orgânico"
         actions={
-          <ActionButton onClick={() => setIsCreateOpen(true)}>
+          <ActionButton onClick={handleOpenCreateModal}>
             <Plus className="h-4 w-4" />
             Novo Post
           </ActionButton>
         }
       />
 
-      <div className="grid gap-6 xl:grid-cols-[280px_minmax(0,1fr)]">
+      <div className={cn("grid gap-6", isSidebarCollapsed ? "xl:grid-cols-[96px_minmax(0,1fr)]" : "xl:grid-cols-[280px_minmax(0,1fr)]")}>
         <aside className="flex flex-col gap-4">
           <GlassPanel className="overflow-hidden p-4">
-            <div className="flex items-center gap-3">
+            <div className={cn("flex items-center gap-3", isSidebarCollapsed && "justify-center")}>
               <button
                 type="button"
                 className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border/70 bg-white text-foreground shadow-sm transition hover:bg-muted dark:bg-card/90 dark:hover:bg-card"
-                onClick={() => setCurrentDate(referenceDate)}
+                onClick={() => setIsSidebarCollapsed((value) => !value)}
+                aria-label={isSidebarCollapsed ? "Expandir lateral" : "Recolher lateral"}
               >
                 <Menu className="h-4 w-4" />
               </button>
-              <div>
-                <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Calendário</p>
-                <h2 className="text-lg font-semibold text-foreground">Great Orgânico</h2>
-              </div>
+              {!isSidebarCollapsed ? (
+                <div>
+                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Calendário</p>
+                  <h2 className="text-lg font-semibold text-foreground">Great Orgânico</h2>
+                </div>
+              ) : null}
             </div>
           </GlassPanel>
 
-          <MiniMonth date={currentDate} />
-          <SideAgenda
-            events={currentMonthEvents}
-            teamMembers={teamMembers}
-            onDelete={(event) => setPendingDelete(event)}
-          />
+          {!isSidebarCollapsed ? (
+            <>
+              <MiniMonth date={currentDate} />
+              <SideAgenda
+                events={currentMonthEvents}
+                teamMembers={teamMembers}
+                onDelete={(event) => setPendingDelete(event)}
+              />
+            </>
+          ) : null}
         </aside>
 
         <div className="space-y-4">
@@ -789,7 +888,7 @@ export function CalendarPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setCurrentDate(referenceDate)}
+                onClick={() => setCurrentDate(getTodayDate())}
                 className="rounded-full border border-border/70 bg-white px-4 py-2.5 text-sm font-semibold text-foreground shadow-sm transition hover:bg-muted dark:bg-card/90 dark:hover:bg-card"
                 >
                   Hoje
@@ -828,7 +927,7 @@ export function CalendarPage() {
                   <div className="sticky top-0 z-10 grid grid-cols-[72px_repeat(7,minmax(0,1fr))] border-b border-border/50 bg-white/95 backdrop-blur dark:bg-card/95">
                     <div className="px-3 py-4" />
                     {weekDates.map((date, index) => {
-                      const isToday = formatDateKey(date) === formatDateKey(referenceDate);
+                      const isToday = formatDateKey(date) === formatDateKey(getTodayDate());
 
                       return (
                         <div key={formatDateKey(date)} className="px-2 py-4 text-center">
@@ -1017,6 +1116,19 @@ export function CalendarPage() {
                         <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Status</p>
                         <p className="mt-2 text-sm font-semibold text-foreground">{selectedEvent.status}</p>
                       </div>
+                      <div className="rounded-2xl bg-muted/45 p-4 sm:col-span-2">
+                        <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Adicionado por</p>
+                        <div className="mt-3">
+                          {teamMembers.find((item) => item.id === selectedEvent.addedById) ? (
+                            (() => {
+                              const addedBy = teamMembers.find((item) => item.id === selectedEvent.addedById)!;
+                              return <MemberChip name={addedBy.name} role={addedBy.role} color={addedBy.color} src={addedBy.avatarUrl} />;
+                            })()
+                          ) : (
+                            <p className="text-sm text-muted-foreground">Não informado.</p>
+                          )}
+                        </div>
+                      </div>
                     </div>
 
                     <div className="mt-5 flex flex-wrap items-center gap-2">
@@ -1029,7 +1141,128 @@ export function CalendarPage() {
                       <span className="text-sm text-muted-foreground">{selectedEvent.description}</span>
                     </div>
 
+                    <div className="mt-6 rounded-3xl border border-border/60 bg-muted/20 p-4">
+                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Editar informações</p>
+                      <div className="mt-4 grid gap-4 md:grid-cols-2">
+                        <label className="grid gap-2 md:col-span-2">
+                          <span className="text-sm font-medium text-foreground">Título</span>
+                          <input
+                            value={eventForm?.title ?? ""}
+                            onChange={(event) =>
+                              setEventForm((previous) => (previous ? { ...previous, title: event.target.value } : previous))
+                            }
+                            className="rounded-2xl border border-border/70 bg-background px-4 py-3 text-sm outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
+                          />
+                        </label>
+                        <label className="grid gap-2 md:col-span-2">
+                          <span className="text-sm font-medium text-foreground">Descrição</span>
+                          <textarea
+                            value={eventForm?.description ?? ""}
+                            onChange={(event) =>
+                              setEventForm((previous) =>
+                                previous ? { ...previous, description: event.target.value } : previous,
+                              )
+                            }
+                            rows={3}
+                            className="rounded-2xl border border-border/70 bg-background px-4 py-3 text-sm outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
+                          />
+                        </label>
+                        <label className="grid gap-2">
+                          <span className="text-sm font-medium text-foreground">Tipo</span>
+                          <select
+                            value={eventForm?.type ?? "Reels"}
+                            onChange={(event) =>
+                              setEventForm((previous) =>
+                                previous ? { ...previous, type: event.target.value as CalendarEvent["type"] } : previous,
+                              )
+                            }
+                            className="rounded-2xl border border-border/70 bg-background px-4 py-3 text-sm outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
+                          >
+                            <option value="Reels">Reels</option>
+                            <option value="Stories">Stories</option>
+                            <option value="Carrossel">Carrossel</option>
+                            <option value="Feed">Feed</option>
+                          </select>
+                        </label>
+                        <label className="grid gap-2">
+                          <span className="text-sm font-medium text-foreground">Status</span>
+                          <select
+                            value={eventForm?.status ?? "Agendado"}
+                            onChange={(event) =>
+                              setEventForm((previous) =>
+                                previous ? { ...previous, status: event.target.value as CalendarEvent["status"] } : previous,
+                              )
+                            }
+                            className="rounded-2xl border border-border/70 bg-background px-4 py-3 text-sm outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
+                          >
+                            <option value="Agendado">Agendado</option>
+                            <option value="Em produÃ§Ã£o">Em produÃ§Ã£o</option>
+                            <option value="Aprovado">Aprovado</option>
+                            <option value="Publicado">Publicado</option>
+                          </select>
+                        </label>
+                        <label className="grid gap-2">
+                          <span className="text-sm font-medium text-foreground">Data</span>
+                          <RoundedDatePicker
+                            label="Data"
+                            value={eventForm?.date ?? selectedEvent.date}
+                            onChange={(value) => setEventForm((previous) => (previous ? { ...previous, date: value } : previous))}
+                          />
+                        </label>
+                        <label className="grid gap-2">
+                          <span className="text-sm font-medium text-foreground">Horário</span>
+                          <RoundedTimePicker
+                            label="Hora"
+                            value={eventForm?.time ?? selectedEvent.time}
+                            onChange={(value) => setEventForm((previous) => (previous ? { ...previous, time: value } : previous))}
+                          />
+                        </label>
+                        <label className="grid gap-2 md:col-span-2">
+                          <span className="text-sm font-medium text-foreground">Responsáveis</span>
+                          <ResponsibleMultiPicker
+                            value={eventForm?.responsibleIds ?? getEventResponsibleIds(selectedEvent)}
+                            teamMembers={teamMembers}
+                            onChange={(value) =>
+                              setEventForm((previous) =>
+                                previous
+                                  ? {
+                                      ...previous,
+                                      responsibleIds: value,
+                                      responsibleId: value[0] ?? previous.responsibleId,
+                                    }
+                                  : previous,
+                              )
+                            }
+                          />
+                        </label>
+                        <label className="grid gap-2 md:col-span-2">
+                          <span className="text-sm font-medium text-foreground">Adicionado por</span>
+                          <select
+                            value={eventForm?.addedById ?? currentMember?.id ?? teamMembers[0]?.id ?? ""}
+                            onChange={(event) =>
+                              setEventForm((previous) =>
+                                previous ? { ...previous, addedById: Number(event.target.value) } : previous,
+                              )
+                            }
+                            className="rounded-2xl border border-border/70 bg-background px-4 py-3 text-sm outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
+                          >
+                            {teamMembers.map((member) => (
+                              <option key={member.id} value={member.id}>
+                                {member.name} - {member.role}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      </div>
+                    </div>
+
                     <div className="mt-6 flex flex-wrap gap-3">
+                      <ActionButton
+                        onClick={handleSaveEvent}
+                        className="bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                      >
+                        Salvar alterações
+                      </ActionButton>
                       <ActionButton
                         onClick={handleDuplicateEvent}
                         className="bg-primary text-primary-foreground shadow-lg shadow-primary/20"
@@ -1174,6 +1407,22 @@ export function CalendarPage() {
                     }
                   />
                 </label>
+
+                <div className="md:col-span-2 rounded-2xl border border-border/60 bg-muted/20 p-4">
+                  <p className="text-sm font-medium text-foreground">Quem adicionou</p>
+                  <div className="mt-3">
+                    {currentMember ? (
+                      <MemberChip
+                        name={currentMember.name}
+                        role={currentMember.role}
+                        color={currentMember.color}
+                        src={currentMember.avatarUrl}
+                      />
+                    ) : (
+                      <p className="text-sm text-muted-foreground">Perfil atual não identificado.</p>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
 

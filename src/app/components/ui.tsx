@@ -87,14 +87,14 @@ export function GlassPanel({
 }
 
 export function PageHeader({
-  eyebrow,
+  eyebrow: _eyebrow,
   title,
   description,
   actions,
 }: {
   eyebrow?: string;
   title: string;
-  description: string;
+  description?: string;
   actions?: ReactNode;
 }) {
   return (
@@ -106,14 +106,9 @@ export function PageHeader({
       className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"
     >
       <div className="space-y-2">
-        {eyebrow ? (
-          <span className="inline-flex rounded-full bg-primary/8 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary">
-            {eyebrow}
-          </span>
-        ) : null}
         <div className="space-y-1">
           <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">{title}</h1>
-          <p className="max-w-3xl text-sm leading-6 text-muted-foreground sm:text-base">{description}</p>
+          {description ? <p className="max-w-3xl text-sm leading-6 text-muted-foreground sm:text-base">{description}</p> : null}
         </div>
       </div>
       {actions ? <div className="flex items-center gap-3">{actions}</div> : null}

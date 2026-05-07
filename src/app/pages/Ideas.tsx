@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, Plus, Lightbulb, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import { ChevronDown, Image as ImageIcon, Link2, Lightbulb, Plus, Upload, Video, X } from "lucide-react";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "motion/react";
 import { ideas } from "../data/mockData";
@@ -30,6 +30,8 @@ const ideaCategories = [
 ] as const;
 
 type IdeaCategory = (typeof ideaCategories)[number];
+type IdeaMediaSource = "url" | "upload";
+type IdeaMediaKind = "photo" | "video";
 
 type IdeaFormState = {
   title: string;
@@ -38,7 +40,24 @@ type IdeaFormState = {
   description: string;
   script: string;
   responsibleId: number;
+  mediaSource: IdeaMediaSource;
+  mediaKind: IdeaMediaKind;
+  mediaUrl: string;
+  mediaFileName: string;
 };
+
+function readFileAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+function isVideoLike(url: string) {
+  return /^data:video\//i.test(url) || /\.(mp4|webm|mov|m4v)(\?|#|$)/i.test(url);
+}
 
 function MemberDropdown({
   value,
@@ -130,6 +149,7 @@ export function IdeasPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<{ ideaId: number; ideaTitle: string } | null>(null);
   const sparkTimerRef = useRef<number | null>(null);
+  const mediaInputRef = useRef<HTMLInputElement | null>(null);
   const [form, setForm] = useState<IdeaFormState>({
     title: "",
     category: ideaCategories[0],
@@ -137,6 +157,10 @@ export function IdeasPage() {
     description: "",
     script: "",
     responsibleId: teamMembers[0].id,
+    mediaSource: "url",
+    mediaKind: "photo",
+    mediaUrl: "",
+    mediaFileName: "",
   });
 
   const visibleItems = useMemo(
@@ -196,6 +220,10 @@ export function IdeasPage() {
         status: "Ideia",
         script: form.script.trim() || undefined,
         responsibleId: form.responsibleId,
+        mediaSource: form.mediaSource,
+        mediaKind: form.mediaKind,
+        mediaUrl: form.mediaUrl.trim() || undefined,
+        mediaFileName: form.mediaFileName.trim() || undefined,
       },
       ...previous,
     ]);
@@ -208,8 +236,40 @@ export function IdeasPage() {
       description: "",
       script: "",
       responsibleId: teamMembers[0].id,
+      mediaSource: "url",
+      mediaKind: "photo",
+      mediaUrl: "",
+      mediaFileName: "",
     });
     toast.success("Ideia criada com sucesso.");
+  };
+
+  const handleMediaFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null;
+
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
+      toast.error("Envie uma imagem ou vídeo.");
+      event.target.value = "";
+      return;
+    }
+
+    const mediaUrl = await readFileAsDataUrl(file);
+    const mediaKind: IdeaMediaKind = file.type.startsWith("video/") ? "video" : "photo";
+
+    setForm((previous) => ({
+      ...previous,
+      mediaSource: "upload",
+      mediaKind,
+      mediaUrl,
+      mediaFileName: file.name,
+    }));
+
+    event.target.value = "";
+    toast.success("Mídia adicionada à ideia.");
   };
 
   const handleDeleteIdea = (ideaId: number) => {
@@ -295,6 +355,31 @@ export function IdeasPage() {
               <p className="mt-2 text-sm font-medium text-muted-foreground">{idea.theme}</p>
                 <p className="mt-3 text-sm leading-6 text-muted-foreground">{idea.description}</p>
               </div>
+
+              {idea.mediaUrl ? (
+                <div className="mt-5 overflow-hidden rounded-3xl border border-border/60 bg-background">
+                  <div className="flex items-center justify-between gap-3 border-b border-border/60 px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      {idea.mediaKind === "video" || isVideoLike(idea.mediaUrl) ? (
+                        <Video className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                      )}
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                        {idea.mediaKind === "video" || isVideoLike(idea.mediaUrl) ? "Vídeo" : "Foto"}
+                      </p>
+                    </div>
+                    {idea.mediaFileName ? (
+                      <span className="truncate text-xs text-muted-foreground">{idea.mediaFileName}</span>
+                    ) : null}
+                  </div>
+                  {idea.mediaKind === "video" || isVideoLike(idea.mediaUrl) ? (
+                    <video src={idea.mediaUrl} controls className="h-52 w-full bg-black object-cover" />
+                  ) : (
+                    <img src={idea.mediaUrl} alt={idea.title} className="h-52 w-full object-cover" />
+                  )}
+                </div>
+              ) : null}
 
               {idea.script ? (
                 <div
@@ -429,16 +514,115 @@ export function IdeasPage() {
                   className="rounded-[1.75rem] border border-border/70 bg-background px-4 py-3 text-sm outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
                 />
               </label>
-              <label className="grid gap-2 md:col-span-2">
-                <span className="text-sm font-medium text-foreground">Roteiro</span>
-                <textarea
-                  value={form.script}
-                  onChange={(event) => setForm((previous) => ({ ...previous, script: event.target.value }))}
-                  rows={4}
-                  className="rounded-[1.75rem] border border-border/70 bg-background px-4 py-3 text-sm outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
-                />
-              </label>
-            </div>
+                <label className="grid gap-2 md:col-span-2">
+                  <span className="text-sm font-medium text-foreground">Roteiro</span>
+                  <textarea
+                    value={form.script}
+                    onChange={(event) => setForm((previous) => ({ ...previous, script: event.target.value }))}
+                    rows={4}
+                    className="rounded-[1.75rem] border border-border/70 bg-background px-4 py-3 text-sm outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
+                  />
+                </label>
+
+                <div className="md:col-span-2 rounded-[1.75rem] border border-border/60 bg-muted/20 p-4">
+                  <div className="flex items-center gap-2">
+                    <Upload className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium text-foreground">Mídia da ideia</span>
+                  </div>
+
+                  <div className="mt-4 inline-flex rounded-full border border-border/60 bg-background p-1">
+                    <button
+                      type="button"
+                      onClick={() => setForm((previous) => ({ ...previous, mediaSource: "url" }))}
+                      className={`rounded-full px-3 py-2 text-xs font-semibold transition ${form.mediaSource === "url" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <Link2 className="h-3.5 w-3.5" />
+                        URL
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setForm((previous) => ({ ...previous, mediaSource: "upload" }))}
+                      className={`rounded-full px-3 py-2 text-xs font-semibold transition ${form.mediaSource === "upload" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <Upload className="h-3.5 w-3.5" />
+                        Upload
+                      </span>
+                    </button>
+                  </div>
+
+                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                    <label className="grid gap-2">
+                      <span className="text-sm font-medium text-foreground">Tipo de mídia</span>
+                      <RoundedDropdown
+                        label="Tipo de mídia"
+                        value={form.mediaKind}
+                        options={[
+                          { label: "Foto", value: "photo" },
+                          { label: "Vídeo", value: "video" },
+                        ]}
+                        onChange={(value) => setForm((previous) => ({ ...previous, mediaKind: value }))}
+                      />
+                    </label>
+
+                    {form.mediaSource === "url" ? (
+                      <label className="grid gap-2">
+                        <span className="text-sm font-medium text-foreground">URL da mídia</span>
+                        <input
+                          value={form.mediaUrl}
+                          onChange={(event) => setForm((previous) => ({ ...previous, mediaUrl: event.target.value }))}
+                          placeholder="https://..."
+                          className="rounded-full border border-border/70 bg-background px-4 py-3 text-sm outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
+                        />
+                      </label>
+                    ) : (
+                      <div className="grid gap-2">
+                        <span className="text-sm font-medium text-foreground">Upload de mídia</span>
+                        <input
+                          ref={mediaInputRef}
+                          type="file"
+                          accept="image/*,video/*"
+                          hidden
+                          onChange={handleMediaFileChange}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => mediaInputRef.current?.click()}
+                          className="inline-flex items-center justify-center gap-2 rounded-full border border-border/70 bg-background px-4 py-3 text-sm font-medium text-foreground transition hover:bg-muted/70"
+                        >
+                          <Upload className="h-4 w-4" />
+                          Selecionar arquivo
+                        </button>
+                        {form.mediaFileName ? (
+                          <p className="text-xs text-muted-foreground">{form.mediaFileName}</p>
+                        ) : null}
+                      </div>
+                    )}
+                  </div>
+
+                  {form.mediaUrl ? (
+                    <div className="mt-4 overflow-hidden rounded-2xl border border-border/60 bg-background">
+                      <div className="flex items-center gap-2 border-b border-border/60 px-4 py-3">
+                        {form.mediaKind === "video" || isVideoLike(form.mediaUrl) ? (
+                          <Video className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                        )}
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                          Prévia
+                        </p>
+                      </div>
+                      {form.mediaKind === "video" || isVideoLike(form.mediaUrl) ? (
+                        <video src={form.mediaUrl} controls className="h-44 w-full bg-black object-cover" />
+                      ) : (
+                        <img src={form.mediaUrl} alt="Prévia da mídia" className="h-44 w-full object-cover" />
+                      )}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
 
             <div className="mt-6 flex flex-wrap justify-end gap-3">
               <ActionButton variant="secondary" onClick={() => setIsCreateOpen(false)}>

@@ -117,6 +117,7 @@ export type CalendarEvent = {
   type: ContentType;
   responsibleId: number;
   responsibleIds?: number[];
+  addedById?: number;
   status: PostStatus;
   date: string;
   time: string;
@@ -142,6 +143,10 @@ export type Idea = {
   status: IdeaStatus;
   script?: string;
   responsibleId: number;
+  mediaSource?: "url" | "upload";
+  mediaKind?: "photo" | "video";
+  mediaUrl?: string;
+  mediaFileName?: string;
 };
 
 export type HistoryEvent = {

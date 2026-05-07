@@ -44,7 +44,7 @@ export function Sidebar({ onLogout }: { onLogout?: () => void }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed left-4 top-4 z-40 inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-border/70 bg-card/90 text-foreground shadow-[var(--shadow-card)] backdrop-blur xl:hidden"
+        className="fixed left-4 top-4 z-40 inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-white/75 text-foreground shadow-[0_10px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl xl:hidden"
       >
         <PanelLeft className="h-5 w-5" />
       </button>
@@ -60,17 +60,27 @@ export function Sidebar({ onLogout }: { onLogout?: () => void }) {
 
       <aside
         className={cn(
-          "fixed left-0 top-0 z-40 flex h-screen w-[290px] flex-col bg-white px-5 py-6 backdrop-blur-xl transition-transform duration-300 xl:translate-x-0 dark:bg-[#fbfbfb]",
+          "fixed inset-y-0 left-0 z-40 flex w-[290px] -translate-x-full flex-col bg-transparent px-5 py-6 shadow-none backdrop-blur-0 transition-transform duration-300 xl:left-0 xl:top-0 xl:bottom-0 xl:flex xl:w-[280px] xl:translate-x-0 xl:rounded-none",
           open ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        <div className="mb-12 flex items-center px-1 pt-1">
-          <div className="inline-flex h-[74px] w-[220px] items-center justify-start overflow-hidden">
+        <div className="mb-10 flex items-center px-1 pt-1">
+          <div className="flex items-center gap-3">
             <img
-              src="/great-logo.svg"
+              src="/logo-great.png"
               alt="Great Orgânico"
-              className="h-full w-full object-contain object-left"
+              className="h-12 w-12 shrink-0 object-contain"
             />
+
+            <div className="flex min-w-0 flex-col justify-center leading-none">
+              <span className="text-[22px] font-black tracking-[0.18em] text-black">
+                GREAT
+              </span>
+
+              <span className="mt-1 text-[13px] font-semibold tracking-[0.22em] text-zinc-700">
+                ORGÂNICO
+              </span>
+            </div>
           </div>
         </div>
 
