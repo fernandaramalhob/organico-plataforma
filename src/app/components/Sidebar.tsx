@@ -107,12 +107,12 @@ export function Sidebar({ onLogout }: { onLogout?: () => void }) {
               to={to}
               className={({ isActive }) =>
                 cn(
-                  "flex h-14 w-full items-center gap-4 rounded-full px-5 text-[15px] font-medium transition duration-200",
+                  "flex h-12 w-full items-center gap-4 rounded-full border px-4 text-[15px] font-medium transition duration-200",
                   isActive
-                    ? "bg-[linear-gradient(180deg,#ff201f_0%,#e51414_100%)] text-white shadow-[0_18px_40px_rgba(229,20,20,0.28)]"
+                    ? "border-primary bg-primary text-white shadow-[0_18px_40px_rgba(229,20,20,0.28)]"
                     : isDark
-                      ? "text-slate-300/90 hover:bg-white/6 hover:text-white"
-                      : "text-slate-600 hover:bg-black/4 hover:text-slate-900",
+                      ? "border-transparent text-slate-300/90 hover:bg-primary/10 hover:text-white"
+                      : "border-transparent text-slate-600 hover:bg-primary/8 hover:text-primary",
                 )
               }
             >
@@ -128,8 +128,12 @@ export function Sidebar({ onLogout }: { onLogout?: () => void }) {
               to="/settings"
               className={({ isActive }) =>
                 cn(
-                  "flex items-center gap-4 rounded-xl px-2 py-3 text-[15px] font-medium transition",
-                  isActive ? "text-slate-900" : isDark ? "text-slate-300/90 hover:text-white" : "text-slate-600 hover:text-slate-900",
+                  "flex items-center gap-4 rounded-full border px-4 py-3 text-[15px] font-medium transition",
+                  isActive
+                    ? "border-primary bg-primary text-white shadow-[0_18px_40px_rgba(229,20,20,0.28)]"
+                    : isDark
+                      ? "border-transparent text-slate-300/90 hover:bg-primary/10 hover:text-white"
+                      : "border-transparent text-slate-600 hover:bg-primary/8 hover:text-primary",
                 )
               }
             >
@@ -142,8 +146,10 @@ export function Sidebar({ onLogout }: { onLogout?: () => void }) {
                 type="button"
                 onClick={onLogout}
                 className={cn(
-                  "flex w-full items-center gap-4 rounded-xl px-2 py-3 text-[15px] font-medium transition",
-                  isDark ? "text-slate-300/90 hover:text-white" : "text-slate-600 hover:text-slate-900",
+                  "flex w-full items-center gap-4 rounded-full border px-4 py-3 text-[15px] font-medium transition",
+                  isDark
+                    ? "border-transparent text-slate-300/90 hover:bg-primary/10 hover:text-white"
+                    : "border-transparent text-slate-600 hover:bg-primary/8 hover:text-primary",
                 )}
               >
                 <LogOut className="h-4 w-4 shrink-0" />

@@ -16,6 +16,7 @@ import {
   CalendarRange,
   Download,
   Eye,
+  ChevronDown,
   FileDown,
   FileImage,
   Printer,
@@ -69,6 +70,7 @@ type SavedReport = {
   label: string;
   generatedAt: string;
   period: ReportPeriod;
+  days?: number;
   typeFilter: ContentType | "todos";
   responsibleId: number | "todos";
   startDate: string;
@@ -93,6 +95,9 @@ function RoundedDropdown<T extends string | number>({
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const selected = options.find((option) => option.value === value) ?? options[0];
+  const { isDark } = useThemeMode();
+  const surfaceColor = isDark ? "rgb(var(--sidebar) / 1)" : "#ffffff";
+  const menuColor = isDark ? "rgb(var(--background) / 1)" : "#ffffff";
 
   useEffect(() => {
     const handlePointerDown = (event: MouseEvent) => {
@@ -110,7 +115,10 @@ function RoundedDropdown<T extends string | number>({
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        className="flex w-full items-center justify-between gap-3 rounded-full border border-border/70 bg-background px-5 py-3 text-left text-sm transition hover:border-primary/25 hover:shadow-sm dark:border-white/8 dark:bg-[#171c25] dark:text-foreground dark:hover:bg-[#1f2631]"
+        className="flex w-full items-center justify-between gap-3 rounded-full border border-border/70 px-5 py-3 text-left text-sm text-foreground transition hover:border-primary/25 hover:shadow-sm dark:border-white/8 dark:text-foreground"
+        style={{
+          backgroundColor: surfaceColor,
+        }}
       >
         <span
           className="truncate font-medium"
@@ -120,9 +128,12 @@ function RoundedDropdown<T extends string | number>({
         </span>
           <span
             className={cn(
-              "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border/60 bg-muted/40 text-muted-foreground transition dark:border-white/8 dark:bg-[#1f2631] dark:text-slate-200",
+              "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border/60 text-muted-foreground transition dark:border-white/8 dark:bg-[#1f2631] dark:text-slate-200",
               open && "rotate-180",
             )}
+            style={{
+              backgroundColor: isDark ? "rgb(var(--sidebar) / 1)" : "#ffffff",
+            }}
           >
           <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
             <path d="M5 7.5L10 12.5L15 7.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -131,7 +142,12 @@ function RoundedDropdown<T extends string | number>({
       </button>
 
       {open ? (
-        <div className="absolute left-0 top-full z-[90] mt-2 w-full overflow-hidden rounded-[1.75rem] border border-border/70 bg-white p-2 shadow-[0_24px_60px_rgba(15,23,42,0.14)] dark:border-white/8 dark:bg-[#121821] dark:shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
+        <div
+          className="absolute left-0 top-full z-[90] mt-2 w-full overflow-hidden rounded-[1.75rem] border border-border/70 p-2 shadow-[0_24px_60px_rgba(15,23,42,0.14)] dark:border-white/8 dark:shadow-[0_24px_60px_rgba(0,0,0,0.28)]"
+          style={{
+            backgroundColor: menuColor,
+          }}
+        >
           <div className="space-y-1">
             {options.map((option) => {
               const active = option.value === value;
@@ -148,8 +164,12 @@ function RoundedDropdown<T extends string | number>({
                     "flex w-full items-center justify-between rounded-full px-4 py-3 text-left text-sm transition",
                     active
                       ? "bg-primary text-primary-foreground shadow-sm dark:bg-[#ff3b4e]"
-                      : "hover:bg-muted/70 dark:text-slate-200 dark:hover:bg-white/6",
+                      : "text-foreground hover:bg-primary/8 dark:text-slate-200 dark:hover:bg-card/98",
                   )}
+                  style={{
+                    backgroundColor: active ? "rgb(var(--primary) / 1)" : surfaceColor,
+                    color: active ? "rgb(var(--primary-foreground) / 1)" : "rgb(var(--foreground) / 1)",
+                  }}
                 >
                   <span
                     className="font-medium"
@@ -180,6 +200,32 @@ function formatDateKey(date: Date) {
   return date.toISOString().slice(0, 10);
 }
 
+function startOfMonth(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+function addMonths(date: Date, amount: number) {
+  return new Date(date.getFullYear(), date.getMonth() + amount, 1);
+}
+
+function buildMonthGrid(date: Date) {
+  const firstDay = startOfMonth(date);
+  const startOffset = (firstDay.getDay() + 6) % 7;
+  const gridStart = new Date(firstDay);
+  gridStart.setDate(firstDay.getDate() - startOffset);
+  gridStart.setHours(12, 0, 0, 0);
+
+  return Array.from({ length: 42 }, (_, index) => {
+    const nextDate = new Date(gridStart);
+    nextDate.setDate(gridStart.getDate() + index);
+    return nextDate;
+  });
+}
+
+function formatMonthTitle(date: Date) {
+  return new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" }).format(date);
+}
+
 function addDays(date: Date, amount: number) {
   const nextDate = new Date(date);
   nextDate.setDate(nextDate.getDate() + amount);
@@ -192,17 +238,12 @@ function diffDays(start: Date, end: Date) {
   return Math.max(0, Math.round((endTime - startTime) / 86400000));
 }
 
-function rangeFromPeriod(period: ReportPeriod, anchorDate: Date, customRange: { start: string; end: string }) {
-  if (period === "custom") {
-    return {
-      start: parseDate(customRange.start),
-      end: parseDate(customRange.end),
-    };
-  }
+function rangeFromPeriod(period: ReportPeriod, anchorDate: Date, customDays: number) {
+  const days = period === "7" ? 7 : period === "30" ? 30 : customDays;
+  const safeDays = Number.isFinite(days) && days > 0 ? Math.floor(days) : 1;
 
-  const days = period === "7" ? 7 : 30;
   return {
-    start: addDays(anchorDate, -(days - 1)),
+    start: addDays(anchorDate, -(safeDays - 1)),
     end: new Date(anchorDate),
   };
 }
@@ -244,13 +285,201 @@ function downloadText(filename: string, content: string, mimeType: string) {
   URL.revokeObjectURL(url);
 }
 
+function DateRangePicker({
+  label,
+  startValue,
+  endValue,
+  onChange,
+}: {
+  label: string;
+  startValue: string;
+  endValue: string;
+  onChange: (next: { startValue: string; endValue: string }) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const { isDark } = useThemeMode();
+  const [cursor, setCursor] = useState(
+    () => (startValue ? parseDate(startValue) : null) || (endValue ? parseDate(endValue) : null) || new Date(),
+  );
+
+  useEffect(() => {
+    const nextCursor = (startValue ? parseDate(startValue) : null) || (endValue ? parseDate(endValue) : null);
+    if (nextCursor) {
+      setCursor(nextCursor);
+    }
+  }, [endValue, startValue]);
+
+  useEffect(() => {
+    const handlePointerDown = (event: MouseEvent) => {
+      if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => document.removeEventListener("mousedown", handlePointerDown);
+  }, []);
+
+  const startDate = startValue ? parseDate(startValue) : null;
+  const endDate = endValue ? parseDate(endValue) : null;
+  const resolvedStart = startDate && endDate ? (startDate <= endDate ? startDate : endDate) : startDate;
+  const resolvedEnd = startDate && endDate ? (startDate <= endDate ? endDate : startDate) : endDate;
+  const hasRange = Boolean(resolvedStart && resolvedEnd);
+  const monthGrid = buildMonthGrid(cursor);
+  const surfaceColor = isDark ? "rgb(var(--sidebar) / 1)" : "#ffffff";
+  const popoverColor = isDark ? "rgb(var(--background) / 1)" : "#ffffff";
+  const displayLabel = hasRange
+    ? `${new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short" }).format(resolvedStart!)} - ${new Intl.DateTimeFormat("pt-BR", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }).format(resolvedEnd!)}`
+    : resolvedStart
+      ? new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" }).format(resolvedStart)
+      : "Selecionar intervalo";
+
+  return (
+    <div ref={rootRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        className="flex w-full items-center justify-between gap-3 rounded-full border border-border/70 px-5 py-3 text-left text-sm text-foreground transition hover:border-primary/25 hover:shadow-sm dark:border-white/8"
+        style={{ backgroundColor: surfaceColor }}
+      >
+        <span className="flex items-center gap-3">
+          <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <CalendarRange className="h-4 w-4" />
+          </span>
+          <span>
+            <span className="block text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{label}</span>
+            <span className="block font-medium text-foreground">{displayLabel}</span>
+          </span>
+        </span>
+        <span
+          className={cn(
+            "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border/60 text-muted-foreground transition dark:border-white/8 dark:bg-[#1f2631] dark:text-slate-200",
+            open && "rotate-180",
+          )}
+          style={{ backgroundColor: isDark ? "rgb(var(--sidebar) / 1)" : "#ffffff" }}
+        >
+          <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
+            <path d="M5 7.5L10 12.5L15 7.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </span>
+      </button>
+
+      {open ? (
+        <div
+          className="absolute left-0 top-full z-[90] mt-2 w-[340px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-[1.75rem] border border-border/70 shadow-[0_24px_60px_rgba(15,23,42,0.14)] dark:border-white/8 dark:shadow-[0_24px_60px_rgba(0,0,0,0.28)]"
+          style={{ backgroundColor: popoverColor }}
+        >
+          <div className="flex items-center justify-between border-b border-border/60 px-4 py-4">
+            <button
+              type="button"
+              onClick={() => setCursor((current) => addMonths(current, -1))}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-muted text-foreground transition hover:bg-muted/80 dark:bg-[#1a2029] dark:hover:bg-[#232a37]"
+            >
+              <ChevronDown className="h-4 w-4 rotate-90" />
+            </button>
+            <div className="text-center">
+              <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Selecionar intervalo</p>
+              <p className="mt-1 text-sm font-semibold text-foreground">{formatMonthTitle(cursor)}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setCursor((current) => addMonths(current, 1))}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-muted text-foreground transition hover:bg-muted/80 dark:bg-[#1a2029] dark:hover:bg-[#232a37]"
+            >
+              <ChevronDown className="h-4 w-4 -rotate-90" />
+            </button>
+          </div>
+
+          <div className="px-4 pb-4 pt-3">
+            <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              {["S", "T", "Q", "Q", "S", "S", "D"].map((day) => (
+                <span key={day}>{day}</span>
+              ))}
+            </div>
+            <div className="mt-2 grid grid-cols-7 gap-1">
+              {monthGrid.map((date) => {
+                const key = formatDateKey(date);
+                const isCurrentMonth = date.getMonth() === cursor.getMonth();
+                const isStart = key === startValue;
+                const isEnd = key === endValue;
+                const inSelectedRange = resolvedStart && resolvedEnd ? date >= resolvedStart && date <= resolvedEnd : false;
+
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => {
+                      if (!startValue || (startValue && endValue)) {
+                        onChange({ startValue: key, endValue: "" });
+                        return;
+                      }
+
+                      const currentStart = parseDate(startValue);
+                      if (date < currentStart) {
+                        onChange({ startValue: key, endValue: startValue });
+                        return;
+                      }
+
+                      onChange({ startValue, endValue: key });
+                    }}
+                    className={cn(
+                      "flex h-10 items-center justify-center rounded-full text-sm transition",
+                      isStart && "bg-primary text-primary-foreground shadow-lg shadow-primary/20",
+                      isEnd && "bg-primary text-primary-foreground shadow-lg shadow-primary/20",
+                      !isStart && !isEnd && inSelectedRange && "bg-primary/10 text-primary",
+                      !isStart && !isEnd && !inSelectedRange && isCurrentMonth && "text-foreground hover:bg-muted dark:text-foreground dark:hover:bg-card/98",
+                      !isCurrentMonth && "text-muted-foreground/35",
+                    )}
+                  >
+                    {date.getDate()}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="mt-4 flex items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const now = new Date();
+                  onChange({
+                    startValue: formatDateKey(addDays(now, -29)),
+                    endValue: formatDateKey(now),
+                  });
+                  setCursor(now);
+                  setOpen(false);
+                }}
+                className="rounded-full border border-border/60 bg-card px-3 py-2 text-xs font-semibold text-foreground shadow-sm transition hover:bg-muted/60 dark:border-white/8 dark:hover:bg-card/98"
+              >
+                Últimos 30 dias
+              </button>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="rounded-full border border-border/60 bg-card px-3 py-2 text-xs font-semibold text-muted-foreground shadow-sm transition hover:text-foreground dark:border-white/8 dark:hover:bg-card/98"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function ReportsPage() {
   const { isDark } = useThemeMode();
   const anchorDate = useMemo(() => new Date("2026-04-30T12:00:00"), []);
   const [period, setPeriod] = useState<ReportPeriod>("30");
   const [typeFilter, setTypeFilter] = useState<ContentType | "todos">("todos");
   const [responsibleFilter, setResponsibleFilter] = useState<number | "todos">("todos");
-  const [customRange, setCustomRange] = useState({ start: "2026-04-01", end: "2026-04-30" });
+  const [customStartDate, setCustomStartDate] = useState(() => formatDateKey(addDays(anchorDate, -29)));
+  const [customEndDate, setCustomEndDate] = useState(() => formatDateKey(anchorDate));
   const [teamMembers] = useTeamProfiles();
   const [posts] = usePosts();
   const [goals] = useSupabaseSyncedListState<Goal>({ key: "goals", table: "goals", fallback: [] });
@@ -266,28 +495,33 @@ export function ReportsPage() {
     ? "overflow-hidden bg-[linear-gradient(135deg,rgba(131,58,180,0.96),rgba(180,97,214,0.9),rgba(225,48,108,0.82))] text-white"
     : "overflow-hidden bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(249,250,252,0.98))] text-foreground";
   const heroStatClass = isDark
-    ? "rounded-3xl bg-white/12 p-5 ring-1 ring-white/10 backdrop-blur"
-    : "rounded-3xl border border-border/60 bg-white/92 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)]";
+    ? "rounded-3xl bg-card/12 p-5 ring-1 ring-border/30 backdrop-blur"
+    : "rounded-3xl border border-border/60 bg-card/96 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)]";
   const filtersBarClass = isDark
     ? "mt-5 flex flex-col gap-4 rounded-[2rem] border border-border/60 bg-card/95 p-4 lg:flex-row lg:items-center"
-    : "mt-5 flex flex-col gap-4 rounded-[2rem] border border-border/60 bg-white/98 p-4 shadow-[0_18px_42px_rgba(15,23,42,0.05)] lg:flex-row lg:items-center";
+    : "mt-5 flex flex-col gap-4 rounded-[2rem] border border-border/60 bg-card/98 p-4 shadow-[0_18px_42px_rgba(15,23,42,0.05)] lg:flex-row lg:items-center";
   const softSectionClass = isDark
     ? "rounded-[2rem] border border-border/60 bg-muted/35 p-5 dark:bg-card/95"
-    : "rounded-[2rem] border border-border/60 bg-white/95 p-5";
+    : "rounded-[2rem] border border-border/60 bg-card/95 p-5";
   const softTileClass = isDark
-    ? "rounded-2xl bg-white/80 p-4 dark:bg-background/80"
-    : "rounded-2xl border border-border/50 bg-white p-4 shadow-[0_10px_24px_rgba(15,23,42,0.04)]";
+    ? "rounded-2xl bg-card/80 p-4 dark:bg-background/80"
+    : "rounded-2xl border border-border/50 bg-card/80 p-4 shadow-[0_10px_24px_rgba(15,23,42,0.04)]";
   const softCardClass = isDark
     ? "rounded-3xl border border-border/60 bg-muted/35 p-5 dark:bg-card/95"
-    : "rounded-3xl border border-border/60 bg-white/95 p-5 shadow-[0_14px_32px_rgba(15,23,42,0.05)]";
+    : "rounded-3xl border border-border/60 bg-card/95 p-5 shadow-[0_14px_32px_rgba(15,23,42,0.05)]";
   const softCardCompactClass = isDark
     ? "rounded-3xl bg-muted/35 p-5 dark:bg-card/90"
-    : "rounded-3xl border border-border/60 bg-white/95 p-5 shadow-[0_14px_32px_rgba(15,23,42,0.05)]";
+    : "rounded-3xl border border-border/60 bg-card/95 p-5 shadow-[0_14px_32px_rgba(15,23,42,0.05)]";
 
-  const currentRange = useMemo(
-    () => rangeFromPeriod(period, anchorDate, customRange),
-    [anchorDate, customRange, period],
-  );
+  const currentRange = useMemo(() => {
+    if (period === "custom") {
+      const start = customStartDate ? parseDate(customStartDate) : addDays(anchorDate, -29);
+      const end = customEndDate ? parseDate(customEndDate) : start;
+      return start <= end ? { start, end } : { start: end, end: start };
+    }
+
+    return rangeFromPeriod(period, anchorDate, 30);
+  }, [anchorDate, customEndDate, customStartDate, period]);
   const previousRange = useMemo(() => shiftRange(currentRange.start, currentRange.end), [currentRange]);
 
   const filteredPosts = useMemo(
@@ -581,7 +815,14 @@ export function ReportsPage() {
   const handleSaveReport = () => {
     const snapshot: SavedReport = {
       id: `${Date.now()}`,
-      label: `Relatório ${period === "custom" ? "personalizado" : reportPeriods.find((item) => item.value === period)?.label ?? period}`,
+      label:
+        period === "custom"
+          ? `Relatório ${new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short" }).format(currentRange.start)} - ${new Intl.DateTimeFormat("pt-BR", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            }).format(currentRange.end)}`
+          : `Relatório ${reportPeriods.find((item) => item.value === period)?.label ?? period}`,
       generatedAt: new Intl.DateTimeFormat("pt-BR", {
         day: "2-digit",
         month: "short",
@@ -590,6 +831,7 @@ export function ReportsPage() {
         minute: "2-digit",
       }).format(new Date()),
       period,
+      days: period === "custom" ? diffDays(currentRange.start, currentRange.end) + 1 : undefined,
       typeFilter,
       responsibleId: responsibleFilter,
       startDate: formatDateKey(currentRange.start),
@@ -607,7 +849,8 @@ export function ReportsPage() {
     setPeriod(snapshot.period);
     setTypeFilter(snapshot.typeFilter);
     setResponsibleFilter(snapshot.responsibleId);
-    setCustomRange({ start: snapshot.startDate, end: snapshot.endDate });
+    setCustomStartDate(snapshot.startDate);
+    setCustomEndDate(snapshot.endDate);
     toast.success("Relatório antigo carregado.");
   };
 
@@ -783,8 +1026,8 @@ export function ReportsPage() {
               className={cn(
                 "inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]",
                 isDark
-                  ? "bg-white/14 text-white/82 ring-1 ring-white/10"
-                  : "border border-border/60 bg-white text-muted-foreground shadow-sm",
+                  ? "bg-card/20 text-card-foreground/90 ring-1 ring-border/30"
+                  : "border border-border/60 bg-card text-muted-foreground shadow-sm",
               )}
             >
               Visão geral
@@ -849,25 +1092,17 @@ export function ReportsPage() {
             </label>
 
             {period === "custom" ? (
-              <div className="grid gap-3 md:grid-cols-2">
-                <label className="grid gap-2">
-                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Início</span>
-                  <input
-                    type="date"
-                    value={customRange.start}
-                    onChange={(event) => setCustomRange((previous) => ({ ...previous, start: event.target.value }))}
-                    className="rounded-full border border-border/70 bg-background px-5 py-3 text-sm outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
-                  />
-                </label>
-                <label className="grid gap-2">
-                  <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Fim</span>
-                  <input
-                    type="date"
-                    value={customRange.end}
-                    onChange={(event) => setCustomRange((previous) => ({ ...previous, end: event.target.value }))}
-                    className="rounded-full border border-border/70 bg-background px-5 py-3 text-sm outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/10"
-                  />
-                </label>
+              <div className="grid gap-2">
+                <span className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Data</span>
+                <DateRangePicker
+                  label="Data"
+                  startValue={customStartDate}
+                  endValue={customEndDate}
+                  onChange={({ startValue, endValue }) => {
+                    setCustomStartDate(startValue);
+                    setCustomEndDate(endValue);
+                  }}
+                />
               </div>
             ) : (
               <div className="flex items-center gap-3 rounded-2xl border border-border/70 bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
@@ -1018,7 +1253,7 @@ export function ReportsPage() {
                 key={alert.title}
                 className={cn(
                   "flex items-start gap-3 rounded-3xl border border-border/60 p-4",
-                  isDark ? "bg-muted/30 dark:bg-card/95" : "bg-white/95 shadow-[0_10px_24px_rgba(15,23,42,0.04)]",
+                  isDark ? "bg-muted/30 dark:bg-card/95" : "bg-card/95 shadow-[0_10px_24px_rgba(15,23,42,0.04)]",
                 )}
               >
                 <div
@@ -1095,11 +1330,11 @@ export function ReportsPage() {
               savedReports.map((snapshot) => (
                 <div
                   key={snapshot.id}
-                  className={cn(
-                    "flex flex-col gap-4 rounded-3xl border border-border/60 p-4 md:flex-row md:items-center md:justify-between",
-                    isDark ? "bg-muted/30 dark:bg-card/95" : "bg-white/95 shadow-[0_10px_24px_rgba(15,23,42,0.04)]",
-                  )}
-                >
+                className={cn(
+                  "flex flex-col gap-4 rounded-3xl border border-border/60 p-4 md:flex-row md:items-center md:justify-between",
+                    isDark ? "bg-muted/30 dark:bg-card/95" : "bg-card/95 shadow-[0_10px_24px_rgba(15,23,42,0.04)]",
+                )}
+              >
                   <div>
                     <p className="font-medium text-foreground">{snapshot.label}</p>
                     <p className="text-sm text-muted-foreground">

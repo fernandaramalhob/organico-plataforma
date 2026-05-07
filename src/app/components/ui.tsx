@@ -21,6 +21,7 @@ import { createPortal } from "react-dom";
 import { useEffect, useRef, useState, type CSSProperties, type PropsWithChildren, type ReactNode } from "react";
 import type { ContentType, PostFile, PostStatus } from "../data/mockData";
 import { statusColors, typeColors } from "../data/mockData";
+import { useThemeMode } from "../theme";
 
 export const cn = (...values: Array<string | false | null | undefined>) => clsx(values);
 
@@ -76,7 +77,7 @@ export function GlassPanel({
       initial="hidden"
       animate="visible"
       className={cn(
-        "rounded-3xl border border-border/70 bg-white p-5 shadow-[0_18px_48px_rgba(15,23,42,0.06)] backdrop-blur-xl transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_24px_60px_rgba(15,23,42,0.08)] dark:border-white/6 dark:bg-[linear-gradient(180deg,rgba(19,23,31,0.96),rgba(12,15,21,0.98))] dark:shadow-[0_18px_48px_rgba(0,0,0,0.28)]",
+        "rounded-3xl border border-border/70 bg-card p-5 text-card-foreground shadow-[0_18px_48px_rgba(15,23,42,0.06)] backdrop-blur-xl transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_24px_60px_rgba(15,23,42,0.08)]",
         className,
       )}
       style={style}
@@ -147,13 +148,20 @@ export function ActionButton({
   variant?: "primary" | "secondary" | "ghost";
   onClick?: () => void;
 }) {
+  const { isDark } = useThemeMode();
   const variants = {
     primary:
       "bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90 dark:bg-[#ff3b4e] dark:shadow-[0_14px_34px_rgba(255,59,78,0.22)] dark:hover:bg-[#ff5161]",
     secondary:
-      "border border-border/70 bg-white text-foreground shadow-sm hover:bg-white/95 dark:bg-[#1a2029] dark:hover:bg-[#222833]",
-    ghost: "bg-transparent text-foreground hover:bg-muted/70 dark:hover:bg-white/6",
+      "border border-border/70 text-foreground shadow-sm",
+    ghost: "bg-transparent text-foreground hover:bg-muted/70 dark:hover:bg-card/98",
   };
+
+  const style = variant === "secondary"
+    ? {
+        backgroundColor: isDark ? "rgb(var(--sidebar) / 1)" : "#ffffff",
+      }
+    : undefined;
 
   return (
     <button
@@ -164,6 +172,7 @@ export function ActionButton({
         variants[variant],
         className,
       )}
+      style={style}
     >
       {children}
     </button>
@@ -192,6 +201,7 @@ export function RoundedDropdown<T extends string | number>({
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const selectedOption = options.find((option) => option.value === value) ?? options[0];
+  const { isDark } = useThemeMode();
 
   useEffect(() => {
     const handlePointerDown = (event: MouseEvent) => {
@@ -209,7 +219,10 @@ export function RoundedDropdown<T extends string | number>({
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        className="flex w-full items-center justify-between gap-3 rounded-full border border-border/70 bg-white px-4 py-3 text-sm transition hover:border-primary/25 hover:shadow-sm dark:border-white/8 dark:bg-[#171c25] dark:text-foreground dark:hover:bg-[#1f2631]"
+        className="flex w-full items-center justify-between gap-3 rounded-full border border-border/70 px-4 py-3 text-sm text-foreground transition hover:border-primary/25 hover:shadow-sm dark:border-white/8"
+        style={{
+          backgroundColor: isDark ? "rgb(var(--sidebar) / 1)" : "#ffffff",
+        }}
       >
         <span className="flex items-center gap-3 text-left">
           {selectedOption?.color ? (
@@ -219,11 +232,23 @@ export function RoundedDropdown<T extends string | number>({
             {selectedOption?.label ?? placeholder}
           </span>
         </span>
-        <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition ${open ? "rotate-180" : ""}`} />
+        <span
+          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border/60 text-muted-foreground transition dark:border-white/8 dark:bg-[#1f2631] dark:text-slate-200"
+          style={{
+            backgroundColor: isDark ? "rgb(var(--sidebar) / 1)" : "#ffffff",
+          }}
+        >
+          <ChevronDown className={`h-4 w-4 transition ${open ? "rotate-180" : ""}`} />
+        </span>
       </button>
 
       {open ? (
-        <div className="absolute left-0 top-full z-50 mt-2 w-full rounded-[1.75rem] border border-border/70 bg-white p-2 shadow-[0_24px_60px_rgba(15,23,42,0.14)] dark:border-white/8 dark:bg-[#121821] dark:shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
+        <div
+          className="absolute left-0 top-full z-50 mt-2 w-full rounded-[1.75rem] border border-border/70 p-2 shadow-[0_24px_60px_rgba(15,23,42,0.14)] dark:border-white/8 dark:shadow-[0_24px_60px_rgba(0,0,0,0.28)]"
+          style={{
+            backgroundColor: isDark ? "rgb(var(--background) / 1)" : "#ffffff",
+          }}
+        >
           <p className="px-3 pb-2 pt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
             {label}
           </p>
@@ -239,9 +264,13 @@ export function RoundedDropdown<T extends string | number>({
                     onChange(option.value);
                     setOpen(false);
                   }}
-                    className="flex w-full items-center justify-between rounded-full px-4 py-3 text-left text-sm transition hover:bg-muted/60 dark:hover:bg-white/6"
+                  className="flex w-full items-center justify-between rounded-full px-4 py-3 text-left text-sm transition"
                   style={{
-                    backgroundColor: selected ? "rgb(var(--muted) / 1)" : undefined,
+                    backgroundColor: selected
+                      ? "rgb(var(--muted) / 1)"
+                      : isDark
+                        ? "rgb(var(--background) / 1)"
+                        : "#ffffff",
                     boxShadow: selected ? "inset 0 0 0 1px rgb(var(--border) / 0.7)" : undefined,
                   }}
                 >
@@ -442,7 +471,7 @@ export function RoundedDatePicker({
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        className="flex w-full items-center justify-between gap-3 rounded-full border border-border/70 bg-white px-4 py-3 text-left text-sm transition hover:border-primary/25 hover:shadow-sm dark:border-white/8 dark:bg-[#171c25] dark:text-foreground dark:hover:bg-[#1f2631]"
+        className="flex w-full items-center justify-between gap-3 rounded-full border border-border/70 bg-card px-4 py-3 text-left text-sm text-foreground transition hover:border-primary/25 hover:shadow-sm dark:border-white/8 dark:hover:bg-card/98"
       >
         <span className="flex items-center gap-3">
           <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -459,7 +488,7 @@ export function RoundedDatePicker({
       {open && popoverPosition ? (
             <div
               ref={popoverRef}
-              className="z-[9999] overflow-hidden overscroll-contain rounded-[1.75rem] border border-border/70 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.16)] dark:border-white/8 dark:bg-[#121821] dark:shadow-[0_24px_60px_rgba(0,0,0,0.28)]"
+              className="z-[9999] overflow-hidden overscroll-contain rounded-[1.75rem] border border-border/70 bg-card shadow-[0_24px_60px_rgba(15,23,42,0.16)] dark:border-white/8 dark:shadow-[0_24px_60px_rgba(0,0,0,0.28)]"
               style={{
                 position: "fixed",
                 top: popoverPosition.top,
@@ -514,7 +543,7 @@ export function RoundedDatePicker({
                       "flex h-10 items-center justify-center rounded-full text-sm transition",
                       isSelected && "bg-primary text-primary-foreground shadow-lg shadow-primary/20",
                       !isSelected && isToday && "border border-primary/30 bg-primary/8 text-primary",
-                      !isSelected && !isToday && isCurrentMonth && "text-foreground hover:bg-muted dark:text-foreground dark:hover:bg-white/6",
+                      !isSelected && !isToday && isCurrentMonth && "text-foreground hover:bg-muted dark:text-foreground dark:hover:bg-card/98",
                       !isCurrentMonth && "text-muted-foreground/35",
                     )}
                   >
@@ -533,14 +562,14 @@ export function RoundedDatePicker({
                   setCursor(now);
                   setOpen(false);
                 }}
-                className="rounded-full border border-border/60 bg-white px-3 py-2 text-xs font-semibold text-foreground shadow-sm transition hover:bg-muted/60 dark:border-white/8 dark:bg-[#1a2029] dark:hover:bg-[#232a37]"
+                className="rounded-full border border-border/60 bg-card px-3 py-2 text-xs font-semibold text-foreground shadow-sm transition hover:bg-muted/60 dark:border-white/8 dark:hover:bg-card/98"
               >
                 Hoje
               </button>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="rounded-full border border-border/60 bg-white px-3 py-2 text-xs font-semibold text-muted-foreground shadow-sm transition hover:text-foreground dark:border-white/8 dark:bg-[#121821] dark:hover:bg-[#1a2029]"
+                className="rounded-full border border-border/60 bg-card px-3 py-2 text-xs font-semibold text-muted-foreground shadow-sm transition hover:text-foreground dark:border-white/8 dark:hover:bg-card/98"
               >
                 Fechar
               </button>
@@ -602,7 +631,7 @@ export function RoundedTimePicker({
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        className="flex w-full items-center justify-between gap-3 rounded-full border border-border/70 bg-white px-4 py-3 text-left text-sm transition hover:border-primary/25 hover:shadow-sm dark:border-white/8 dark:bg-[#171c25] dark:text-foreground dark:hover:bg-[#1f2631]"
+        className="flex w-full items-center justify-between gap-3 rounded-full border border-border/70 bg-card px-4 py-3 text-left text-sm text-foreground transition hover:border-primary/25 hover:shadow-sm dark:border-white/8 dark:hover:bg-card/98"
       >
         <span className="flex items-center gap-3">
           <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -620,7 +649,7 @@ export function RoundedTimePicker({
         ? createPortal(
             <div
               ref={popoverRef}
-              className="z-[9999] overflow-hidden overscroll-contain rounded-[1.75rem] border border-border/70 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.16)] dark:border-white/8 dark:bg-[#121821] dark:shadow-[0_24px_60px_rgba(0,0,0,0.28)]"
+              className="z-[9999] overflow-hidden overscroll-contain rounded-[1.75rem] border border-border/70 bg-card shadow-[0_24px_60px_rgba(15,23,42,0.16)] dark:border-white/8 dark:shadow-[0_24px_60px_rgba(0,0,0,0.28)]"
               style={{
                 position: "fixed",
                 top: popoverPosition.top,
@@ -644,7 +673,7 @@ export function RoundedTimePicker({
                           key={item}
                           type="button"
                           onClick={() => onChange(`${item}:${selectedMinute}`)}
-                          className="flex w-full items-center justify-between rounded-full px-3 py-2 text-sm transition hover:bg-muted dark:hover:bg-white/6"
+                          className="flex w-full items-center justify-between rounded-full px-3 py-2 text-sm transition hover:bg-muted dark:hover:bg-card/98"
                           style={{
                             backgroundColor: active ? "rgb(var(--muted) / 1)" : undefined,
                           }}
@@ -666,7 +695,7 @@ export function RoundedTimePicker({
                           key={item}
                           type="button"
                           onClick={() => onChange(`${selectedHour}:${item}`)}
-                          className="flex w-full items-center justify-between rounded-full px-3 py-2 text-sm transition hover:bg-muted dark:hover:bg-white/6"
+                          className="flex w-full items-center justify-between rounded-full px-3 py-2 text-sm transition hover:bg-muted dark:hover:bg-card/98"
                           style={{
                             backgroundColor: active ? "rgb(var(--muted) / 1)" : undefined,
                           }}
@@ -680,20 +709,20 @@ export function RoundedTimePicker({
                 </div>
               </div>
               <div className="flex items-center justify-between border-t border-border/60 px-4 py-3">
-                <button
-                  type="button"
-                  onClick={() => onChange("09:00")}
-                className="rounded-full border border-border/60 bg-white px-3 py-2 text-xs font-semibold text-foreground shadow-sm transition hover:bg-muted/60 dark:border-white/8 dark:bg-[#1a2029] dark:hover:bg-[#232a37]"
-                >
-                  09:00
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setOpen(false)}
-                className="rounded-full border border-border/60 bg-white px-3 py-2 text-xs font-semibold text-muted-foreground shadow-sm transition hover:text-foreground dark:border-white/8 dark:bg-[#121821] dark:hover:bg-[#1a2029]"
-                >
-                  Fechar
-                </button>
+              <button
+                type="button"
+                onClick={() => onChange("09:00")}
+                className="rounded-full border border-border/60 bg-card px-3 py-2 text-xs font-semibold text-foreground shadow-sm transition hover:bg-muted/60 dark:border-white/8 dark:hover:bg-[#232a37]"
+              >
+                09:00
+              </button>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="rounded-full border border-border/60 bg-card px-3 py-2 text-xs font-semibold text-muted-foreground shadow-sm transition hover:text-foreground dark:border-white/8 dark:hover:bg-[#1a2029]"
+              >
+                Fechar
+              </button>
               </div>
             </div>,
             document.body,
@@ -720,9 +749,9 @@ export function IconActionButton({
 }) {
   const tones = {
     neutral:
-      "border-border/70 bg-white/95 text-muted-foreground shadow-sm hover:border-primary/25 hover:text-foreground hover:shadow-md dark:border-white/8 dark:bg-[#171c25] dark:text-muted-foreground dark:hover:bg-[#1f2631]",
+      "border-border/70 bg-white/95 text-muted-foreground shadow-sm hover:border-primary/25 hover:text-foreground hover:shadow-md dark:border-white/8 dark:bg-[#171c25] dark:hover:bg-[#1f2631]",
     danger:
-      "border-rose-200 bg-white/95 text-rose-500 shadow-sm hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600 hover:shadow-md dark:border-[#ff8da5]/20 dark:bg-[#1d171a] dark:text-[#ff8da5] dark:hover:bg-[#2a171b]",
+      "border-rose-200 bg-card/95 text-rose-500 shadow-sm hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600 hover:shadow-md dark:border-[#ff8da5]/20 dark:bg-[#1d171a] dark:text-[#ff8da5] dark:hover:bg-[#2a171b]",
   };
 
   return (
@@ -773,7 +802,7 @@ export function ConfirmDialog({
       onClick={onCancel}
     >
       <div
-        className="w-full max-w-md rounded-[2rem] border border-border/60 bg-white p-6 shadow-[0_30px_80px_rgba(15,23,42,0.18)] dark:border-white/8 dark:bg-card/96 dark:shadow-[0_30px_80px_rgba(0,0,0,0.35)]"
+        className="w-full max-w-md rounded-[2rem] border border-border/60 bg-card p-6 shadow-[0_30px_80px_rgba(15,23,42,0.18)] dark:border-white/8 dark:bg-card/96 dark:shadow-[0_30px_80px_rgba(0,0,0,0.35)]"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-start gap-4">
@@ -811,17 +840,25 @@ export function FilterPill({
   label: string;
   onClick?: () => void;
 }) {
+  const { isDark } = useThemeMode();
   return (
     <button
       type="button"
       onClick={onClick}
-      className={cn(
-        "rounded-full px-4 py-2 text-sm font-medium transition duration-200",
+        className={cn(
+          "rounded-full px-4 py-2 text-sm font-medium transition duration-200",
+          active
+            ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 dark:bg-[#ff3b4e]"
+            : "border border-border/60 text-muted-foreground shadow-sm hover:text-foreground dark:border-white/8 dark:hover:text-white",
+        )}
+      style={
         active
-          ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 dark:bg-[#ff3b4e]"
-          : "border border-border/60 bg-white text-muted-foreground shadow-sm hover:bg-white/95 hover:text-foreground dark:border-white/8 dark:bg-[#171c25] dark:text-slate-300 dark:hover:bg-[#1f2631] dark:hover:text-white",
-      )}
-    >
+          ? undefined
+          : {
+              backgroundColor: isDark ? "rgb(var(--sidebar) / 1)" : "#ffffff",
+            }
+      }
+      >
       {label}
     </button>
   );
@@ -1024,10 +1061,18 @@ export function ProgressBar({
 }
 
 export function DetailGrid({ items }: { items: { label: string; value: string }[] }) {
+  const { isDark } = useThemeMode();
+
   return (
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       {items.map((item) => (
-        <div key={item.label} className="rounded-2xl border border-border/60 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)] dark:border-white/8 dark:bg-[#151b24]">
+        <div
+          key={item.label}
+          className="rounded-2xl border border-border/60 p-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)] dark:border-white/8"
+          style={{
+            backgroundColor: isDark ? "rgb(21 27 36 / 1)" : "#ffffff",
+          }}
+        >
           <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{item.label}</p>
           <p className="mt-2 text-base font-semibold text-foreground">{item.value}</p>
         </div>
@@ -1044,7 +1089,7 @@ export function EmptyState({
   description: string;
 }) {
   return (
-    <div className="rounded-3xl border border-dashed border-border bg-white p-8 text-center shadow-[0_10px_24px_rgba(15,23,42,0.04)] dark:border-white/10 dark:bg-white/3">
+    <div className="rounded-3xl border border-dashed border-border bg-card p-8 text-center shadow-[0_10px_24px_rgba(15,23,42,0.04)] dark:border-white/10 dark:bg-card/90">
       <h3 className="text-lg font-semibold text-foreground">{title}</h3>
       <p className="mt-2 text-sm leading-6 text-muted-foreground">{description}</p>
     </div>
@@ -1068,7 +1113,7 @@ export function FileBadge({ file }: { file: PostFile }) {
   const Icon = fileIcon(file.kind);
 
   return (
-    <div className="rounded-2xl border border-border/60 bg-white p-4 shadow-[0_8px_20px_rgba(15,23,42,0.04)] dark:border-white/8 dark:bg-white/4">
+    <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-[0_8px_20px_rgba(15,23,42,0.04)] dark:border-white/8 dark:bg-card/90">
       <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
         <Icon className="h-5 w-5" />
       </div>
@@ -1093,12 +1138,12 @@ export function ChecklistItem({
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center gap-3 rounded-2xl border border-border/60 bg-white px-4 py-3 text-left transition hover:bg-white/95 dark:border-white/8 dark:bg-[#151b24] dark:hover:bg-[#1d2430]"
+      className="flex w-full items-center gap-3 rounded-2xl border border-border/60 bg-card px-4 py-3 text-left transition hover:bg-background/95 dark:border-white/8 dark:hover:bg-[#1d2430]"
     >
       <span
         className={cn(
           "inline-flex h-6 w-6 items-center justify-center rounded-full border transition",
-          done ? "border-success bg-success text-white" : "border-border bg-white text-transparent",
+          done ? "border-success bg-success text-white" : "border-border bg-card text-transparent",
         )}
       >
         <Check className="h-4 w-4" />

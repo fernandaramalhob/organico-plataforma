@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Maximize2, PencilLine, Save, Upload, Users, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { PencilLine, Save, Upload, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, ActionButton, GlassPanel, PageHeader, PageTransition, SectionTitle, cn } from "../components/ui";
 import { useCurrentTeamMember, useTeamProfiles, type EditableTeamMember } from "../data/profiles";
@@ -90,8 +90,12 @@ export function MyProfilePage() {
 
   const memberCount = profiles.length;
   const color = member?.color ?? "rgb(var(--primary) / 1)";
-  const initials = useMemo(() => member?.name?.charAt(0)?.toUpperCase() ?? "U", [member?.name]);
-
+  const surfaceClass = isDark
+    ? "rounded-2xl border border-border/60 bg-[#171c25] shadow-[0_8px_24px_rgba(15,23,42,0.12)]"
+    : "rounded-2xl border border-border/60 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.04)]";
+  const surfaceMutedClass = isDark
+    ? "rounded-[1.5rem] border border-border/60 bg-[#171c25] shadow-[0_10px_24px_rgba(15,23,42,0.12)]"
+    : "rounded-[1.5rem] border border-border/60 bg-white shadow-[0_10px_24px_rgba(15,23,42,0.04)]";
   if (!member) {
     return (
       <PageTransition>
@@ -148,11 +152,11 @@ export function MyProfilePage() {
               background: isDark
                 ? "linear-gradient(180deg, rgba(19,23,31,0.96), rgba(12,15,21,0.98))"
                 : "linear-gradient(180deg, rgba(255,255,255,0.99), rgba(255,255,255,0.97))",
-              borderColor: "rgb(232 231 240 / 1)",
-              boxShadow: isDark ? "0 18px 36px rgba(0,0,0,0.28)" : "0 18px 36px rgba(15,23,42,0.05)",
+              border: "none",
+              boxShadow: "none",
             }}
           >
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+            <div className="flex flex-col gap-6">
               <div className="flex items-start gap-5">
                 <button
                   type="button"
@@ -162,9 +166,6 @@ export function MyProfilePage() {
                   title="Ampliar foto de perfil"
                 >
                   <Avatar name={member.name} color={member.color} src={member.avatarUrl} size="lg" />
-                  <span className="absolute -bottom-1 -right-1 inline-flex h-8 w-8 items-center justify-center rounded-full border border-border/70 bg-white text-muted-foreground shadow-sm transition group-hover:text-foreground dark:bg-[#171c25]">
-                    <Maximize2 className="h-3.5 w-3.5" />
-                  </span>
                 </button>
                 <div className="space-y-3">
                   <div>
@@ -206,17 +207,12 @@ export function MyProfilePage() {
                 </div>
               </div>
 
-              <div className="rounded-[1.5rem] border border-border/60 bg-white px-6 py-5 text-center text-foreground shadow-[0_10px_24px_rgba(15,23,42,0.04)] dark:bg-[#171c25]">
-                <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Perfil ativo</p>
-                <p className="mt-2 text-4xl font-semibold">{initials}</p>
-                <p className="mt-2 text-sm text-muted-foreground">Conta conectada</p>
-              </div>
             </div>
 
             <div className="mt-6">
               <div className="grid gap-4 md:grid-cols-2">
                 {detailItems.map((item) => (
-                  <div key={item.label} className="rounded-2xl border border-border/60 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)] dark:bg-[#171c25]">
+                  <div key={item.label} className={`${surfaceClass} p-4`}>
                     <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{item.label}</p>
                     <p className="mt-2 text-base font-semibold text-foreground">{item.value}</p>
                   </div>
@@ -231,22 +227,22 @@ export function MyProfilePage() {
               description="Informações que aparecem nas telas do sistema e nos cards da equipe."
             />
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              <div className="rounded-2xl border border-border/60 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)] dark:bg-[#171c25]">
+              <div className={`${surfaceClass} p-4`}>
                 <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">ID do perfil</p>
                 <p className="mt-2 text-lg font-semibold text-foreground">{member.id}</p>
               </div>
-              <div className="rounded-2xl border border-border/60 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)] dark:bg-[#171c25]">
+              <div className={`${surfaceClass} p-4`}>
                 <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Avatar</p>
                 <p className="mt-2 text-lg font-semibold text-foreground">{member.avatarUrl ? "Foto personalizada" : "Inicial"}</p>
               </div>
-              <div className="rounded-2xl border border-border/60 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)] dark:bg-[#171c25]">
+              <div className={`${surfaceClass} p-4`}>
                 <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Cor principal</p>
                 <div className="mt-3 flex items-center gap-3">
                   <span className="h-8 w-8 rounded-2xl border border-border/60" style={{ backgroundColor: member.color }} />
                   <p className="text-lg font-semibold text-foreground">{member.color}</p>
                 </div>
               </div>
-              <div className="rounded-2xl border border-border/60 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)] dark:bg-[#171c25]">
+              <div className={`${surfaceClass} p-4`}>
                 <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Função</p>
                 <p className="mt-2 text-lg font-semibold text-foreground">{member.role}</p>
               </div>
@@ -265,15 +261,15 @@ export function MyProfilePage() {
             </p>
 
             <div className="mt-5 space-y-3">
-              <div className="rounded-2xl border border-border/60 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)] dark:bg-[#171c25]">
+              <div className={`${surfaceClass} p-4`}>
                 <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Login</p>
                 <p className="mt-2 text-sm font-semibold text-foreground">{member.email}</p>
               </div>
-              <div className="rounded-2xl border border-border/60 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)] dark:bg-[#171c25]">
+              <div className={`${surfaceClass} p-4`}>
                 <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Senha</p>
                 <p className="mt-2 text-sm font-semibold text-foreground">••••••••••</p>
               </div>
-              <div className="rounded-2xl border border-border/60 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)] dark:bg-[#171c25]">
+              <div className={`${surfaceClass} p-4`}>
                 <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Especialidade</p>
                 <p className="mt-2 text-sm font-semibold text-foreground">{member.specialty}</p>
               </div>
@@ -288,7 +284,7 @@ export function MyProfilePage() {
                   key={profile.id}
                   className={cn(
                     "flex items-center justify-between rounded-2xl border border-border/60 px-4 py-3 transition",
-                    profile.id === member.id ? "bg-primary/8" : "bg-white dark:bg-transparent",
+                    profile.id === member.id ? "bg-primary/8" : isDark ? "bg-[#171c25]" : "bg-white",
                   )}
                 >
                   <div className="flex items-center gap-3">
@@ -312,7 +308,7 @@ export function MyProfilePage() {
           onClick={() => setIsEditOpen(false)}
         >
           <div
-            className="w-full max-w-2xl rounded-[2rem] border border-border/60 bg-white p-6 shadow-[0_30px_80px_rgba(15,23,42,0.18)] dark:border-white/8 dark:bg-card/95 dark:shadow-[0_30px_80px_rgba(0,0,0,0.35)]"
+            className={`w-full max-w-2xl ${surfaceMutedClass} p-6`}
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-4">
@@ -352,7 +348,7 @@ export function MyProfilePage() {
                   <span className="text-sm text-muted-foreground">{editForm.color}</span>
                 </div>
               </label>
-              <div className="md:col-span-2 rounded-2xl border border-dashed border-border/60 bg-white p-4 text-sm text-muted-foreground dark:bg-[#151b24]">
+              <div className={`md:col-span-2 rounded-2xl border border-dashed border-border/60 p-4 text-sm text-muted-foreground ${isDark ? "bg-[#151b24]" : "bg-white"}`}>
                 Alterações nesta tela são persistidas localmente e aparecem no perfil, no sidebar e nos cards da equipe.
               </div>
             </div>
@@ -376,7 +372,7 @@ export function MyProfilePage() {
           onClick={() => setIsPreviewOpen(false)}
         >
           <div
-            className="w-full max-w-xl overflow-hidden rounded-[2rem] border border-border/60 bg-white p-5 shadow-[0_30px_80px_rgba(15,23,42,0.24)] dark:border-white/8 dark:bg-card/95"
+            className={`w-full max-w-xl overflow-hidden ${surfaceMutedClass} p-5`}
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-4">
@@ -393,7 +389,7 @@ export function MyProfilePage() {
               </button>
             </div>
 
-            <div className="mt-5 flex items-center justify-center rounded-[1.75rem] border border-border/60 bg-white p-5 shadow-[0_10px_24px_rgba(15,23,42,0.04)] dark:bg-[#151b24]">
+            <div className={`mt-5 flex items-center justify-center rounded-[1.75rem] border border-border/60 p-5 ${isDark ? "bg-[#151b24]" : "bg-white shadow-[0_10px_24px_rgba(15,23,42,0.04)]"}`}>
               {member.avatarUrl ? (
                 <img
                   src={member.avatarUrl}

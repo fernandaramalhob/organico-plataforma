@@ -41,6 +41,22 @@ function MemberProgressBar({ value, max, color }: { value: number; max: number; 
   );
 }
 
+function formatGoalDeadlineLabel(goal: { deadline: string; deadlineTime?: string }) {
+  const date = goal.deadline ? new Date(`${goal.deadline}T12:00:00`) : null;
+
+  if (!date) {
+    return "Sem prazo";
+  }
+
+  const dateLabel = new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(date);
+
+  return goal.deadlineTime ? `${dateLabel} • ${goal.deadlineTime}` : dateLabel;
+}
+
 export function MemberProfilePage() {
   const navigate = useNavigate();
   const params = useParams();
@@ -52,6 +68,8 @@ export function MemberProfilePage() {
   const panelBackground = isDark
     ? `linear-gradient(180deg, rgba(24,24,26,0.98), ${member.color}12)`
     : `linear-gradient(180deg, rgba(255,255,255,0.99), rgba(252,252,253,0.98))`;
+  const lightCardClass = "rounded-3xl border border-border/60 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.04)]";
+  const darkCardClass = "rounded-3xl border border-border/60 bg-[#171c25]";
 
   return (
     <PageTransition>
@@ -66,11 +84,10 @@ export function MemberProfilePage() {
                 key={item.id}
                 type="button"
                 onClick={() => navigate(`/member/${item.id}`)}
-                className="rounded-full px-4 py-2 text-sm font-medium transition"
+                className="rounded-full px-4 py-2 text-sm font-medium transition focus:outline-none focus-visible:outline-none"
                 style={{
                   backgroundColor: item.id === member.id ? `${item.color}18` : "rgb(var(--muted) / 1)",
                   color: item.id === member.id ? item.color : "rgb(var(--muted-foreground) / 1)",
-                  boxShadow: item.id === member.id ? `0 12px 24px ${item.color}18` : "none",
                 }}
               >
                 {item.name}
@@ -99,7 +116,7 @@ export function MemberProfilePage() {
           </div>
           <div
             className="rounded-3xl px-6 py-5 text-center"
-            style={{ backgroundColor: isDark ? `${member.color}14` : "rgba(255,255,255,0.92)" }}
+            style={{ backgroundColor: isDark ? `${member.color}14` : "rgba(255,255,255,0.98)" }}
           >
             <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Performance Score</p>
             <p className="mt-2 text-5xl font-semibold text-foreground">{member.stats.performance}</p>
@@ -164,13 +181,13 @@ export function MemberProfilePage() {
             {memberGoals.map((goal) => (
             <div
               key={goal.id}
-              className="rounded-3xl p-5"
-              style={{ backgroundColor: isDark ? `${member.color}12` : "rgba(255,255,255,0.92)" }}
+              className={`rounded-3xl p-5 ${isDark ? darkCardClass : lightCardClass}`}
+              style={{ backgroundColor: isDark ? `${member.color}12` : undefined }}
             >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h3 className="text-lg font-semibold text-foreground">{goal.name}</h3>
-                  <p className="text-sm text-muted-foreground">Prazo: {goal.deadline}</p>
+                  <p className="text-sm text-muted-foreground">Prazo: {formatGoalDeadlineLabel(goal)}</p>
                 </div>
                 <p className="text-sm text-muted-foreground">
                   Atual {goal.current} / Meta {goal.target}

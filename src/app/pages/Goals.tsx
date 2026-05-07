@@ -25,6 +25,7 @@ type GoalFormState = {
   current: string;
   period: string;
   deadline: string;
+  deadlineTime: string;
   responsibleIds: number[];
   checklist: GoalChecklistItem[];
 };
@@ -40,7 +41,8 @@ function createInitialGoalForm(teamMembers: TeamMemberCard[]): GoalFormState {
     target: "",
     current: "",
     period: "Mês",
-    deadline: "",
+    deadline: formatDateKey(new Date()),
+    deadlineTime: "18:00",
     responsibleIds: teamMembers[0] ? [teamMembers[0].id] : [],
     checklist: [],
   };
@@ -78,6 +80,19 @@ function formatDeadlineLabel(value: string) {
     month: "short",
     year: "numeric",
   }).format(date);
+}
+
+function formatDeadlineTimeLabel(value?: string) {
+  if (!value) {
+    return "Horário";
+  }
+
+  const [hour, minute] = value.split(":");
+  if (!hour || !minute) {
+    return "Horário";
+  }
+
+  return `${pad(Number(hour))}:${pad(Number(minute))}`;
 }
 
 function startOfMonth(date: Date) {
@@ -212,8 +227,8 @@ function GoalDatePicker({
                     className={cn(
                       "flex h-10 items-center justify-center rounded-full text-sm transition",
                       isSelected && "bg-primary text-primary-foreground shadow-lg shadow-primary/20",
-                      !isSelected && isToday && "border border-primary/30 bg-primary/8 text-primary",
-                      !isSelected && !isToday && isCurrentMonth && "text-foreground hover:bg-muted",
+                      !isSelected && isToday && "bg-primary/10 text-primary",
+                      !isSelected && !isToday && isCurrentMonth && "text-foreground hover:bg-muted/80",
                       !isCurrentMonth && "text-muted-foreground/35",
                     )}
                   >
@@ -251,15 +266,35 @@ function GoalDatePicker({
   );
 }
 
-function GoalProgressBar({ value, max, color }: { value: number; max: number; color: string }) {
-  const progress = max === 0 ? 0 : (value / max) * 100;
+function GoalTimeInput({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="grid gap-2">
+      <span className="text-sm font-medium text-foreground">Horário limite</span>
+      <input
+        type="time"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="rounded-2xl border border-border/70 bg-background px-4 py-3 text-sm outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/10 dark:bg-white/5"
+      />
+    </label>
+  );
+}
+
+function GoalProgressBar({ progress, color }: { progress: number; color: string }) {
+  const safeProgress = Math.min(Math.max(progress, 0), 100);
 
   return (
     <div className="h-3 overflow-hidden rounded-full bg-muted/70">
       <div
         className="h-full rounded-full transition-[width] duration-700 ease-out"
         style={{
-          width: `${Math.min(progress, 100)}%`,
+          width: `${safeProgress}%`,
           background: `linear-gradient(90deg, ${color} 0%, ${color}CC 100%)`,
         }}
       />
@@ -287,10 +322,8 @@ function GoalAssigneeChips({
             type="button"
             onClick={() => onToggle(member.id)}
             className={cn(
-              "group flex items-center justify-between rounded-2xl border px-3 py-3 text-left transition",
-              selected
-                ? "border-primary/25 bg-primary/5 shadow-sm"
-                : "border-border/70 bg-background hover:border-primary/25 hover:bg-primary/5 dark:bg-card/80",
+              "group flex items-center justify-between rounded-2xl px-3 py-3 text-left transition",
+              selected ? "bg-primary/10 shadow-sm" : "bg-background hover:bg-primary/5 dark:bg-card/80",
             )}
           >
             <span className="flex items-center gap-3">
@@ -311,10 +344,8 @@ function GoalAssigneeChips({
             </span>
             <span
               className={cn(
-                "inline-flex h-5 w-5 items-center justify-center rounded-full border text-[10px] font-bold transition",
-                selected
-                  ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                  : "border-border/60 text-transparent group-hover:border-primary/35",
+                "inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold transition",
+                selected ? "bg-primary text-primary-foreground shadow-sm" : "bg-muted text-transparent group-hover:bg-primary/10",
               )}
             >
               ✓
@@ -426,6 +457,7 @@ export function GoalsPage() {
       current: String(editingGoal.current),
       period: editingGoal.period,
       deadline: editingGoal.deadline,
+      deadlineTime: editingGoal.deadlineTime ?? "18:00",
       responsibleIds: getGoalResponsibleIds(editingGoal),
       checklist: editingGoal.checklist ?? [],
     });
@@ -505,6 +537,7 @@ export function GoalsPage() {
       current: String(goal.current),
       period: goal.period,
       deadline: goal.deadline,
+      deadlineTime: goal.deadlineTime ?? "18:00",
       responsibleIds: getGoalResponsibleIds(goal),
       checklist: goal.checklist ?? [],
     });
@@ -584,11 +617,12 @@ export function GoalsPage() {
       !form.name.trim() ||
       !form.description.trim() ||
       !form.deadline.trim() ||
+      !form.deadlineTime.trim() ||
       Number.isNaN(target) ||
       Number.isNaN(current) ||
       selectedResponsibleIds.length === 0
     ) {
-      toast.error("Preencha nome, responsáveis, descrição, data, meta e atual.");
+      toast.error("Preencha nome, responsáveis, descrição, data, horário, meta e atual.");
       return;
     }
 
@@ -601,6 +635,7 @@ export function GoalsPage() {
       current,
       period: form.period,
       deadline: form.deadline,
+      deadlineTime: form.deadlineTime,
       description: form.description.trim(),
       checklist: form.checklist.map((item) => ({ ...item, label: item.label.trim() })).filter((item) => item.label.length > 0),
     };
@@ -653,7 +688,6 @@ export function GoalsPage() {
         <PageHeader
           eyebrow="Execution"
           title="Metas vivas e conectadas ao time"
-          description="Crie metas individuais ou em grupo, distribua responsáveis e escolha o prazo com um calendário visual."
           actions={
             <ActionButton onClick={openCreateGoal}>
               <Plus className="h-4 w-4" />
@@ -740,9 +774,6 @@ export function GoalsPage() {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Tipos de metas</p>
-              <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                Filtre a lista para ver só metas individuais, só metas em grupo ou tudo junto.
-              </p>
             </div>
             <div className="flex flex-wrap gap-2">
               {[
@@ -781,11 +812,20 @@ export function GoalsPage() {
             const assigneeIds = getGoalResponsibleIds(goal);
             const assignees = teamCards.filter((item) => assigneeIds.includes(item.id));
             const primaryMember = assignees[0] ?? teamCards[0];
-            const progress = (goal.current / goal.target) * 100;
-            const remaining = Math.max(goal.target - goal.current, 0);
-            const statusText = progress >= 100 ? "Meta atingida" : `Faltam ${formatValue(remaining)} para concluir`;
+            const checklistTotal = goal.checklist?.length ?? 0;
+            const checklistDone = goal.checklist?.filter((item) => item.done).length ?? 0;
+            const checklistProgress = checklistTotal > 0 ? (checklistDone / checklistTotal) * 100 : null;
+            const progress = checklistProgress ?? (goal.current / goal.target) * 100;
+            const progressDone = Math.min(Math.max(progress, 0), 100);
+            const progressLeft = Math.max(0, 100 - progressDone);
+            const statusText = `${progressDone.toFixed(0)}% feito · ${progressLeft.toFixed(0)}% faltam`;
             const deadline = parseDateKey(goal.deadline);
+            const deadlineLabel = deadline
+              ? `${new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" }).format(deadline)}${goal.deadlineTime ? ` • ${formatDeadlineTimeLabel(goal.deadlineTime)}` : ""}`
+              : "Sem data";
             const isGroupGoal = assigneeIds.length > 1;
+            const accentColor = isGroupGoal ? null : (primaryMember?.color ?? "#e50914");
+            const progressColor = accentColor ?? "#94a3b8";
 
             return (
               <div
@@ -805,15 +845,30 @@ export function GoalsPage() {
                   index={index + 1}
                   className="overflow-hidden p-6"
                   style={{
-                    background: isDark
-                      ? "linear-gradient(180deg, rgba(24,24,26,0.98), rgba(16,16,18,0.96))"
-                      : "linear-gradient(180deg, rgba(255,255,255,0.99), rgba(250,250,250,0.96))",
-                    borderColor: isDark ? `${primaryMember?.color ?? "#e50914"}22` : "rgba(229,231,238,0.82)",
-                    boxShadow: isDark
-                      ? `0 14px 28px ${primaryMember?.color ?? "#e50914"}0d`
-                      : "0 18px 48px rgba(15,23,42,0.08)",
-                    borderLeftWidth: "4px",
-                    borderLeftColor: primaryMember?.color ?? "#e50914",
+                    background:
+                      isGroupGoal
+                        ? isDark
+                          ? "linear-gradient(180deg, rgba(24,24,26,0.98), rgba(16,16,18,0.96))"
+                          : "linear-gradient(180deg, rgba(255,255,255,0.99), rgba(250,250,250,0.96))"
+                        : isDark
+                          ? "linear-gradient(180deg, rgba(24,24,26,0.98), rgba(16,16,18,0.96))"
+                          : "linear-gradient(180deg, rgba(255,255,255,0.99), rgba(250,250,250,0.96))",
+                    borderColor: isGroupGoal
+                      ? isDark
+                        ? "rgba(255,255,255,0.06)"
+                        : "rgba(229,231,238,0.82)"
+                      : isDark
+                        ? `${accentColor}22`
+                        : "rgba(229,231,238,0.82)",
+                    boxShadow: isGroupGoal
+                      ? isDark
+                        ? "0 14px 28px rgba(15,23,42,0.18)"
+                        : "0 18px 48px rgba(15,23,42,0.08)"
+                      : isDark
+                        ? `0 14px 28px ${accentColor}0d`
+                        : "0 18px 48px rgba(15,23,42,0.08)",
+                    borderLeftWidth: isGroupGoal ? "0px" : "4px",
+                    borderLeftColor: accentColor ?? "transparent",
                   }}
                 >
                 <div className="absolute right-4 top-4 z-10 flex gap-2 opacity-0 transition group-hover:opacity-100">
@@ -841,55 +896,24 @@ export function GoalsPage() {
                   <div className="flex h-full flex-col gap-5">
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div className="min-w-0 space-y-3">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">{goal.name}</h2>
-                        <span
-                          className="rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em]"
-                          style={{
-                            backgroundColor: `${primaryMember?.color ?? "#e50914"}12`,
-                            color: primaryMember?.color ?? "#e50914",
-                          }}
-                        >
-                          {goal.category}
-                        </span>
-                        <span
-                          className="rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em]"
-                          style={{
-                            backgroundColor: isGroupGoal ? `${primaryMember?.color ?? "#e50914"}12` : "rgba(148,163,184,0.16)",
-                            color: primaryMember?.color ?? "#e50914",
-                          }}
-                        >
-                          {isGroupGoal ? `Grupo com ${assignees.length}` : "Individual"}
-                        </span>
-                      </div>
+                      <h2 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">{goal.name}</h2>
                       {assignees.length > 0 ? (
                         <GoalMemberStack members={assignees} color={primaryMember?.color ?? "#e50914"} />
                       ) : null}
                     </div>
 
-                    <div
-                      className="rounded-full px-3 py-1.5 text-sm font-semibold"
-                      style={{
-                        backgroundColor: progress >= 100 ? `${primaryMember?.color ?? "#e50914"}12` : `${primaryMember?.color ?? "#e50914"}08`,
-                        color: primaryMember?.color ?? "#e50914",
-                      }}
-                    >
-                      {progress.toFixed(0)}%
-                    </div>
                   </div>
 
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="rounded-2xl border border-border/60 bg-muted/35 p-4">
-                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Atual</p>
+                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Meta de visualizações</p>
                       <p className="mt-2 text-3xl font-semibold tracking-tight text-foreground">{formatValue(goal.current)}</p>
                       <p className="mt-1 text-sm text-muted-foreground">de {formatValue(goal.target)}</p>
                     </div>
                     <div className="rounded-2xl border border-border/60 bg-muted/35 p-4">
                       <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Prazo</p>
                       <p className="mt-2 text-base font-semibold text-foreground">
-                        {deadline
-                          ? new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" }).format(deadline)
-                          : "Sem data"}
+                        {deadlineLabel}
                       </p>
                       <p className="mt-1 text-sm text-muted-foreground">
                         {goal.period} {isGroupGoal ? " - meta compartilhada" : " - meta individual"}
@@ -898,7 +922,7 @@ export function GoalsPage() {
                   </div>
 
                   <div className="space-y-3">
-                    <GoalProgressBar value={goal.current} max={goal.target} color={primaryMember?.color ?? "#e50914"} />
+                    <GoalProgressBar progress={progressDone} color={progressColor} />
                     <div className="flex items-center justify-between gap-3 text-sm">
                       <span className="font-medium text-foreground">{statusText}</span>
                       <span className="text-muted-foreground">{goal.period}</span>
@@ -1059,10 +1083,16 @@ export function GoalsPage() {
                           <span className="block text-sm font-medium text-foreground">Data limite</span>
                         </div>
                       </div>
-                      <GoalDatePicker
-                        value={form.deadline}
-                        onChange={(value) => setForm((previous) => ({ ...previous, deadline: value }))}
-                      />
+                      <div className="grid gap-3 md:grid-cols-[1.3fr_0.7fr]">
+                        <GoalDatePicker
+                          value={form.deadline}
+                          onChange={(value) => setForm((previous) => ({ ...previous, deadline: value }))}
+                        />
+                        <GoalTimeInput
+                          value={form.deadlineTime}
+                          onChange={(value) => setForm((previous) => ({ ...previous, deadlineTime: value }))}
+                        />
+                      </div>
                     </div>
 
                     <label className="grid gap-2">

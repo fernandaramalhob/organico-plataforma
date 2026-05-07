@@ -98,6 +98,7 @@ export type Goal = {
   current: number;
   period: string;
   deadline: string;
+  deadlineTime?: string;
   description: string;
   checklist?: GoalChecklistItem[];
 };
@@ -208,7 +209,7 @@ export const teamMembers: TeamMember[] = [
     role: "Designer Editorial",
     avatar: "T",
     specialty: "Carrosséis e capas",
-    color: "#FCAF45",
+    color: "#3B82F6",
     stats: {
       postsCreated: 0,
       avgEngagement: 0,
