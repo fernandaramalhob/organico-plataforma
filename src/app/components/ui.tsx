@@ -151,7 +151,7 @@ export function ActionButton({
     primary:
       "bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90 dark:bg-[#ff3b4e] dark:shadow-[0_14px_34px_rgba(255,59,78,0.22)] dark:hover:bg-[#ff5161]",
     secondary:
-      "border border-border/70 bg-white text-foreground shadow-sm hover:bg-muted/60 dark:bg-[#1a2029] dark:hover:bg-[#222833]",
+      "border border-border/70 bg-white text-foreground shadow-sm hover:bg-white/95 dark:bg-[#1a2029] dark:hover:bg-[#222833]",
     ghost: "bg-transparent text-foreground hover:bg-muted/70 dark:hover:bg-white/6",
   };
 
@@ -239,7 +239,7 @@ export function RoundedDropdown<T extends string | number>({
                     onChange(option.value);
                     setOpen(false);
                   }}
-                  className="flex w-full items-center justify-between rounded-full px-4 py-3 text-left text-sm transition hover:bg-muted dark:hover:bg-white/6"
+                    className="flex w-full items-center justify-between rounded-full px-4 py-3 text-left text-sm transition hover:bg-muted/60 dark:hover:bg-white/6"
                   style={{
                     backgroundColor: selected ? "rgb(var(--muted) / 1)" : undefined,
                     boxShadow: selected ? "inset 0 0 0 1px rgb(var(--border) / 0.7)" : undefined,
@@ -442,7 +442,7 @@ export function RoundedDatePicker({
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        className="flex w-full items-center justify-between gap-3 rounded-full border border-border/70 bg-background px-4 py-3 text-left text-sm transition hover:border-primary/25 hover:shadow-sm dark:border-white/8 dark:bg-[#171c25] dark:text-foreground dark:hover:bg-[#1f2631]"
+        className="flex w-full items-center justify-between gap-3 rounded-full border border-border/70 bg-white px-4 py-3 text-left text-sm transition hover:border-primary/25 hover:shadow-sm dark:border-white/8 dark:bg-[#171c25] dark:text-foreground dark:hover:bg-[#1f2631]"
       >
         <span className="flex items-center gap-3">
           <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -459,7 +459,7 @@ export function RoundedDatePicker({
       {open && popoverPosition ? (
             <div
               ref={popoverRef}
-              className="z-[9999] overflow-hidden overscroll-contain rounded-[1.75rem] border border-border/70 bg-background shadow-[0_24px_60px_rgba(15,23,42,0.16)] dark:border-white/8 dark:bg-[#121821] dark:shadow-[0_24px_60px_rgba(0,0,0,0.28)]"
+              className="z-[9999] overflow-hidden overscroll-contain rounded-[1.75rem] border border-border/70 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.16)] dark:border-white/8 dark:bg-[#121821] dark:shadow-[0_24px_60px_rgba(0,0,0,0.28)]"
               style={{
                 position: "fixed",
                 top: popoverPosition.top,
@@ -533,14 +533,14 @@ export function RoundedDatePicker({
                   setCursor(now);
                   setOpen(false);
                 }}
-                className="rounded-full border border-border/60 bg-muted/40 px-3 py-2 text-xs font-semibold text-foreground transition hover:bg-muted/70 dark:border-white/8 dark:bg-[#1a2029] dark:hover:bg-[#232a37]"
+                className="rounded-full border border-border/60 bg-white px-3 py-2 text-xs font-semibold text-foreground shadow-sm transition hover:bg-muted/60 dark:border-white/8 dark:bg-[#1a2029] dark:hover:bg-[#232a37]"
               >
                 Hoje
               </button>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="rounded-full border border-border/60 bg-background px-3 py-2 text-xs font-semibold text-muted-foreground transition hover:text-foreground dark:border-white/8 dark:bg-[#121821] dark:hover:bg-[#1a2029]"
+                className="rounded-full border border-border/60 bg-white px-3 py-2 text-xs font-semibold text-muted-foreground shadow-sm transition hover:text-foreground dark:border-white/8 dark:bg-[#121821] dark:hover:bg-[#1a2029]"
               >
                 Fechar
               </button>
@@ -602,7 +602,7 @@ export function RoundedTimePicker({
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        className="flex w-full items-center justify-between gap-3 rounded-full border border-border/70 bg-background px-4 py-3 text-left text-sm transition hover:border-primary/25 hover:shadow-sm dark:border-white/8 dark:bg-[#171c25] dark:text-foreground dark:hover:bg-[#1f2631]"
+        className="flex w-full items-center justify-between gap-3 rounded-full border border-border/70 bg-white px-4 py-3 text-left text-sm transition hover:border-primary/25 hover:shadow-sm dark:border-white/8 dark:bg-[#171c25] dark:text-foreground dark:hover:bg-[#1f2631]"
       >
         <span className="flex items-center gap-3">
           <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -620,7 +620,7 @@ export function RoundedTimePicker({
         ? createPortal(
             <div
               ref={popoverRef}
-              className="z-[9999] overflow-hidden overscroll-contain rounded-[1.75rem] border border-border/70 bg-background shadow-[0_24px_60px_rgba(15,23,42,0.16)] dark:border-white/8 dark:bg-[#121821] dark:shadow-[0_24px_60px_rgba(0,0,0,0.28)]"
+              className="z-[9999] overflow-hidden overscroll-contain rounded-[1.75rem] border border-border/70 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.16)] dark:border-white/8 dark:bg-[#121821] dark:shadow-[0_24px_60px_rgba(0,0,0,0.28)]"
               style={{
                 position: "fixed",
                 top: popoverPosition.top,
@@ -683,14 +683,14 @@ export function RoundedTimePicker({
                 <button
                   type="button"
                   onClick={() => onChange("09:00")}
-                className="rounded-full border border-border/60 bg-muted/40 px-3 py-2 text-xs font-semibold text-foreground transition hover:bg-muted/70 dark:border-white/8 dark:bg-[#1a2029] dark:hover:bg-[#232a37]"
+                className="rounded-full border border-border/60 bg-white px-3 py-2 text-xs font-semibold text-foreground shadow-sm transition hover:bg-muted/60 dark:border-white/8 dark:bg-[#1a2029] dark:hover:bg-[#232a37]"
                 >
                   09:00
                 </button>
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                className="rounded-full border border-border/60 bg-background px-3 py-2 text-xs font-semibold text-muted-foreground transition hover:text-foreground dark:border-white/8 dark:bg-[#121821] dark:hover:bg-[#1a2029]"
+                className="rounded-full border border-border/60 bg-white px-3 py-2 text-xs font-semibold text-muted-foreground shadow-sm transition hover:text-foreground dark:border-white/8 dark:bg-[#121821] dark:hover:bg-[#1a2029]"
                 >
                   Fechar
                 </button>
@@ -819,7 +819,7 @@ export function FilterPill({
         "rounded-full px-4 py-2 text-sm font-medium transition duration-200",
         active
           ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 dark:bg-[#ff3b4e]"
-          : "bg-muted text-muted-foreground hover:bg-muted/70 hover:text-foreground dark:bg-[#171c25] dark:text-slate-300 dark:hover:bg-[#1f2631] dark:hover:text-white",
+          : "border border-border/60 bg-white text-muted-foreground shadow-sm hover:bg-white/95 hover:text-foreground dark:border-white/8 dark:bg-[#171c25] dark:text-slate-300 dark:hover:bg-[#1f2631] dark:hover:text-white",
       )}
     >
       {label}
@@ -1027,7 +1027,7 @@ export function DetailGrid({ items }: { items: { label: string; value: string }[
   return (
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       {items.map((item) => (
-        <div key={item.label} className="rounded-2xl bg-muted/65 p-4">
+        <div key={item.label} className="rounded-2xl border border-border/60 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)] dark:border-white/8 dark:bg-[#151b24]">
           <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{item.label}</p>
           <p className="mt-2 text-base font-semibold text-foreground">{item.value}</p>
         </div>
@@ -1044,7 +1044,7 @@ export function EmptyState({
   description: string;
 }) {
   return (
-    <div className="rounded-3xl border border-dashed border-border bg-muted/50 p-8 text-center dark:border-white/10 dark:bg-white/3">
+    <div className="rounded-3xl border border-dashed border-border bg-white p-8 text-center shadow-[0_10px_24px_rgba(15,23,42,0.04)] dark:border-white/10 dark:bg-white/3">
       <h3 className="text-lg font-semibold text-foreground">{title}</h3>
       <p className="mt-2 text-sm leading-6 text-muted-foreground">{description}</p>
     </div>
@@ -1068,7 +1068,7 @@ export function FileBadge({ file }: { file: PostFile }) {
   const Icon = fileIcon(file.kind);
 
   return (
-    <div className="rounded-2xl border border-border/60 bg-muted/40 p-4 dark:border-white/8 dark:bg-white/4">
+    <div className="rounded-2xl border border-border/60 bg-white p-4 shadow-[0_8px_20px_rgba(15,23,42,0.04)] dark:border-white/8 dark:bg-white/4">
       <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
         <Icon className="h-5 w-5" />
       </div>
@@ -1093,12 +1093,12 @@ export function ChecklistItem({
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center gap-3 rounded-2xl bg-muted/50 px-4 py-3 text-left transition hover:bg-muted dark:bg-[#151b24] dark:hover:bg-[#1d2430]"
+      className="flex w-full items-center gap-3 rounded-2xl border border-border/60 bg-white px-4 py-3 text-left transition hover:bg-white/95 dark:border-white/8 dark:bg-[#151b24] dark:hover:bg-[#1d2430]"
     >
       <span
         className={cn(
           "inline-flex h-6 w-6 items-center justify-center rounded-full border transition",
-          done ? "border-success bg-success text-white" : "border-border bg-background text-transparent",
+          done ? "border-success bg-success text-white" : "border-border bg-white text-transparent",
         )}
       >
         <Check className="h-4 w-4" />
