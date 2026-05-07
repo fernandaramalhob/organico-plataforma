@@ -10,7 +10,6 @@ import { DashboardPage } from "./pages/Dashboard";
 import { GoalsPage } from "./pages/Goals";
 import { HistoryPage } from "./pages/History";
 import { IdeasPage } from "./pages/Ideas";
-import { InsightsPage } from "./pages/Insights";
 import { MemberProfilePage } from "./pages/MemberProfile";
 import { MetaInsightsPage } from "./pages/MetaInsights";
 import { MyProfilePage } from "./pages/MyProfile";
@@ -20,7 +19,7 @@ import { ReportsPage } from "./pages/Reports";
 import { SettingsPage } from "./pages/Settings";
 import { StoriesPage } from "./pages/Stories";
 import { isAuthenticated, signOut } from "./auth";
-import { ThemeModeProvider } from "./theme";
+import { ThemeModeProvider, useThemeMode } from "./theme";
 
 export default function App() {
   const [authenticated, setAuthenticated] = useState(() => isAuthenticated());
@@ -63,18 +62,28 @@ export default function App() {
 }
 
 function AppShell({ onLogout }: { onLogout: () => void }) {
+  const { isDark } = useThemeMode();
+
   return (
     <div
       className="flex min-h-screen w-full overflow-x-hidden text-foreground"
       style={{
-        background: "linear-gradient(180deg, rgb(246,247,250) 0%, rgb(241,243,247) 100%)",
+        background: isDark
+          ? "radial-gradient(circle at 12% 12%, rgba(131,58,180,0.09), transparent 22%), radial-gradient(circle at 88% 8%, rgba(225,48,108,0.08), transparent 18%), linear-gradient(180deg, rgb(8,10,15) 0%, rgb(10,13,19) 100%)"
+          : "radial-gradient(circle at 14% 0%, rgba(131,58,180,0.06), transparent 24%), radial-gradient(circle at 86% 10%, rgba(225,48,108,0.04), transparent 18%), linear-gradient(180deg, rgb(246,247,250) 0%, rgb(236,240,246) 100%)",
       }}
     >
       <Sidebar onLogout={onLogout} />
-      <div className="flex min-h-screen w-full flex-col xl:pl-[276px] xl:pr-4 xl:py-4">
+      <div className="flex min-h-screen w-full flex-col xl:pl-[304px] xl:pr-5 xl:py-5">
         <div
-          className="flex min-h-screen flex-1 flex-col bg-white/80 xl:min-h-0 xl:rounded-[36px]"
-          style={{ boxShadow: "0 10px 40px rgba(0,0,0,0.04)" }}
+          className="flex min-h-screen flex-1 flex-col overflow-hidden xl:min-h-0 xl:rounded-[36px]"
+          style={{
+            background: isDark
+              ? "linear-gradient(180deg, rgba(15,18,25,0.96) 0%, rgba(11,14,20,0.98) 100%)"
+              : "linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(255,255,255,0.92) 100%)",
+            boxShadow: isDark ? "0 30px 90px rgba(0,0,0,0.42)" : "0 18px 50px rgba(16,24,40,0.08)",
+            border: isDark ? "1px solid rgba(255,255,255,0.05)" : "1px solid rgba(255,255,255,0.9)",
+          }}
         >
           <TopBar />
           <main className="relative min-h-0 flex-1 p-4 sm:p-6 xl:p-7" tabIndex={0}>
@@ -85,7 +94,6 @@ function AppShell({ onLogout }: { onLogout: () => void }) {
               <Route path="/meta-insights" element={<MetaInsightsPage />} />
               <Route path="/calendar" element={<CalendarPage />} />
               <Route path="/post/:id" element={<PostDetailPage />} />
-              <Route path="/insights" element={<InsightsPage />} />
               <Route path="/goals" element={<GoalsPage />} />
               <Route path="/stories" element={<StoriesPage />} />
               <Route path="/ideas" element={<IdeasPage />} />
@@ -104,5 +112,7 @@ function AppShell({ onLogout }: { onLogout: () => void }) {
 }
 
 function AppToaster() {
-  return <Toaster position="top-right" richColors theme="light" />;
+  const { isDark } = useThemeMode();
+
+  return <Toaster position="top-right" richColors theme={isDark ? "dark" : "light"} />;
 }

@@ -20,23 +20,23 @@
 }
 
 .dark {
-  --primary: 255 99 132;
+  --primary: 255 41 57;
   --primary-foreground: 255 255 255;
-  --primary-soft: 225 48 108;
-  --accent-soft: 245 96 64;
+  --primary-soft: 255 64 72;
+  --accent-soft: 166 77 255;
   --success: 48 209 88;
-  --warning: 255 214 10;
-  --destructive: 255 99 132;
-  --background: 8 10 14;
+  --warning: 255 196 61;
+  --destructive: 255 72 72;
+  --background: 9 12 17;
   --foreground: 244 246 250;
-  --card: 18 21 28;
+  --card: 19 23 31;
   --card-foreground: 244 246 250;
-  --sidebar: 10 12 17;
-  --muted: 28 33 42;
-  --muted-foreground: 168 175 190;
-  --border: 40 46 59;
-  --ring: 255 99 132;
-  --shadow: 2 6 23;
+  --sidebar: 10 13 20;
+  --muted: 28 34 45;
+  --muted-foreground: 170 177 193;
+  --border: 38 45 58;
+  --ring: 255 41 57;
+  --shadow: 3 8 24;
 }
 
 @theme inline {

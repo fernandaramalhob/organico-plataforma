@@ -99,6 +99,13 @@ export type Goal = {
   period: string;
   deadline: string;
   description: string;
+  checklist?: GoalChecklistItem[];
+};
+
+export type GoalChecklistItem = {
+  id: string;
+  label: string;
+  done: boolean;
 };
 
 export function getGoalResponsibleIds(goal: Goal) {

@@ -280,18 +280,14 @@ function CalendarSlot({
   return (
     <div
       ref={attachDropRef}
-      onClick={() => {
-        if (events.length === 0) {
-          onAddAtSlot(date, time);
-        }
-      }}
+      onClick={() => onAddAtSlot(date, time)}
       className={cn(
         "relative min-h-[92px] border-l border-t border-border/45 bg-white/85 p-2 transition dark:bg-card/90 dark:border-border/60",
-        events.length === 0 && "cursor-pointer hover:bg-primary/5",
+        "cursor-pointer hover:bg-primary/5",
         isOver && "bg-primary/5",
       )}
     >
-      <div className={cn("space-y-2", events.length > 0 && "pb-7")}>
+      <div className="space-y-2">
         {events.map((event) => (
           <EventChip
             key={event.id}
@@ -303,19 +299,6 @@ function CalendarSlot({
           />
         ))}
       </div>
-      {events.length > 0 ? (
-        <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              onAddAtSlot(date, time);
-            }}
-            className="absolute bottom-2 left-1/2 z-20 inline-flex h-5 w-5 -translate-x-1/2 items-center justify-center rounded-full border border-rose-200 bg-white text-[11px] font-bold leading-none text-rose-600 shadow-sm transition hover:bg-rose-50 dark:border-[#3c2127] dark:bg-card dark:text-[#ff8da5] dark:hover:bg-[#2a171b]"
-            aria-label="Adicionar tarefa neste horário"
-          >
-            +
-          </button>
-      ) : null}
     </div>
   );
 }
@@ -835,27 +818,8 @@ export function CalendarPage() {
         }
       />
 
-      <div className={cn("grid gap-6", isSidebarCollapsed ? "xl:grid-cols-[96px_minmax(0,1fr)]" : "xl:grid-cols-[280px_minmax(0,1fr)]")}>
+      <div className={cn("grid gap-4", isSidebarCollapsed ? "xl:grid-cols-[56px_minmax(0,1fr)]" : "xl:grid-cols-[220px_minmax(0,1fr)]")}>
         <aside className="flex flex-col gap-4">
-          <GlassPanel className="overflow-hidden p-4">
-            <div className={cn("flex items-center gap-3", isSidebarCollapsed && "justify-center")}>
-              <button
-                type="button"
-                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border/70 bg-white text-foreground shadow-sm transition hover:bg-muted dark:bg-card/90 dark:hover:bg-card"
-                onClick={() => setIsSidebarCollapsed((value) => !value)}
-                aria-label={isSidebarCollapsed ? "Expandir lateral" : "Recolher lateral"}
-              >
-                <Menu className="h-4 w-4" />
-              </button>
-              {!isSidebarCollapsed ? (
-                <div>
-                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Calendário</p>
-                  <h2 className="text-lg font-semibold text-foreground">Great Orgânico</h2>
-                </div>
-              ) : null}
-            </div>
-          </GlassPanel>
-
           {!isSidebarCollapsed ? (
             <>
               <MiniMonth date={currentDate} />
@@ -874,22 +838,30 @@ export function CalendarPage() {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border/70 bg-white text-foreground shadow-sm transition hover:bg-muted dark:bg-card/90 dark:hover:bg-card"
+                  onClick={() => setIsSidebarCollapsed((value) => !value)}
+                  aria-label={isSidebarCollapsed ? "Expandir lateral" : "Recolher lateral"}
+                >
+                  <Menu className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
                   onClick={() => handleNavigate(-1)}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border/70 bg-white text-foreground shadow-sm transition hover:bg-muted dark:bg-card/90 dark:hover:bg-card"
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border/70 bg-white text-foreground shadow-sm transition hover:bg-muted dark:bg-card/90 dark:hover:bg-card"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
                 <button
                   type="button"
                   onClick={() => handleNavigate(1)}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border/70 bg-white text-foreground shadow-sm transition hover:bg-muted dark:bg-card/90 dark:hover:bg-card"
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border/70 bg-white text-foreground shadow-sm transition hover:bg-muted dark:bg-card/90 dark:hover:bg-card"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>
                 <button
                   type="button"
-                onClick={() => setCurrentDate(getTodayDate())}
-                className="rounded-full border border-border/70 bg-white px-4 py-2.5 text-sm font-semibold text-foreground shadow-sm transition hover:bg-muted dark:bg-card/90 dark:hover:bg-card"
+                  onClick={() => setCurrentDate(getTodayDate())}
+                  className="rounded-full border border-border/70 bg-white px-4 py-2.5 text-sm font-semibold text-foreground shadow-sm transition hover:bg-muted dark:bg-card/90 dark:hover:bg-card"
                 >
                   Hoje
                 </button>

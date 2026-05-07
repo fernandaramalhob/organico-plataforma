@@ -76,7 +76,7 @@ export function GlassPanel({
       initial="hidden"
       animate="visible"
       className={cn(
-        "rounded-3xl border border-border/70 bg-card/96 p-5 shadow-[var(--shadow-card)] backdrop-blur-xl transition duration-300 hover:-translate-y-0.5 hover:shadow-[var(--shadow-soft)] dark:border-white/8 dark:bg-card/98",
+        "rounded-3xl border border-border/70 bg-card/96 p-5 shadow-[var(--shadow-card)] backdrop-blur-xl transition duration-300 hover:-translate-y-0.5 hover:shadow-[var(--shadow-soft)] dark:border-white/6 dark:bg-[linear-gradient(180deg,rgba(19,23,31,0.96),rgba(12,15,21,0.98))] dark:shadow-[0_18px_48px_rgba(0,0,0,0.28)]",
         className,
       )}
       style={style}

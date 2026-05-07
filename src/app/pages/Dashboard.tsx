@@ -113,27 +113,49 @@ function DashboardMetricCard({
   darkMode?: boolean;
 }) {
   const positive = change >= 0;
+  const shellStyle = darkMode
+    ? {
+        background: "linear-gradient(180deg, rgba(16,18,24,0.98), rgba(10,12,17,0.96))",
+        borderColor: "rgba(255,255,255,0.08)",
+      }
+    : {
+        background: "linear-gradient(180deg, rgba(255,255,255,0.98), rgba(252,252,253,0.98))",
+        borderColor: "rgba(229,231,238,0.82)",
+        boxShadow: "0 18px 48px rgba(15,23,42,0.08)",
+      };
 
   return (
     <GlassPanel
       className="overflow-hidden"
-      style={
-        darkMode
-          ? {
-              background: "linear-gradient(180deg, rgba(16,18,24,0.98), rgba(10,12,17,0.96))",
-              borderColor: "rgba(255,255,255,0.08)",
-            }
-          : undefined
-      }
+      style={shellStyle}
     >
       <div className="flex items-start justify-between gap-4">
-        <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,rgba(131,58,180,0.14),rgba(225,48,108,0.14),rgba(245,96,64,0.12))] text-[#8A2FB1] ring-1 ring-[#833AB4]/10">
+        <div
+          className="inline-flex h-12 w-12 items-center justify-center rounded-2xl text-[#8A2FB1] ring-1 ring-[#833AB4]/10"
+          style={
+            darkMode
+              ? {
+                  background:
+                    "linear-gradient(135deg,rgba(131,58,180,0.14),rgba(225,48,108,0.14),rgba(245,96,64,0.12))",
+                }
+              : {
+                  background: "rgba(131,58,180,0.08)",
+                  boxShadow: "inset 0 0 0 1px rgba(131,58,180,0.08)",
+                }
+          }
+        >
           <Icon className="h-5 w-5" />
         </div>
         <span
           className={[
             "inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold",
-            positive ? "bg-[#833AB4]/10 text-[#6C2CA1]" : "bg-[#F56040]/10 text-[#B94A2D]",
+            positive
+              ? darkMode
+                ? "bg-[#833AB4]/10 text-[#6C2CA1]"
+                : "bg-[#7C3AED]/10 text-[#7C3AED]"
+              : darkMode
+                ? "bg-[#F56040]/10 text-[#B94A2D]"
+                : "bg-[#F97316]/10 text-[#C2410C]",
           ].join(" ")}
         >
           <Sparkles className="h-3.5 w-3.5" />
@@ -146,7 +168,7 @@ function DashboardMetricCard({
         <h3 className="text-3xl font-semibold tracking-tight text-foreground">{value}</h3>
         <p className="text-sm text-muted-foreground">{detail}</p>
       </div>
-      <div className="mt-6 h-2 overflow-hidden rounded-full bg-muted">
+      <div className={darkMode ? "mt-6 h-2 overflow-hidden rounded-full bg-muted" : "mt-6 h-2 overflow-hidden rounded-full bg-slate-100"}>
         <div
           className="h-full rounded-full bg-[linear-gradient(90deg,#833AB4_0%,#E1306C_50%,#F56040_100%)] transition-[width] duration-500"
           style={{ width: `${Math.min(Math.abs(change) * 6, 100)}%` }}
@@ -325,14 +347,18 @@ export function DashboardPage() {
         <div className="grid gap-6 2xl:grid-cols-[1.1fr_0.9fr]">
           <GlassPanel
             index={2}
-            className="bg-card/90"
+            className="bg-white/95"
             style={
               isDark
                 ? {
                     background: "linear-gradient(180deg, rgba(16,18,24,0.98), rgba(10,12,17,0.96))",
                     borderColor: "rgba(255,255,255,0.08)",
                   }
-                : undefined
+                : {
+                    background: "rgba(255,255,255,0.95)",
+                    borderColor: "rgba(229,231,238,0.82)",
+                    boxShadow: "0 16px 44px rgba(15,23,42,0.08)",
+                  }
             }
           >
             <SectionTitle
@@ -354,7 +380,10 @@ export function DashboardPage() {
                             background: "linear-gradient(180deg, rgba(16,18,24,0.98), rgba(10,12,17,0.96))",
                             borderColor: "rgba(255,255,255,0.08)",
                           }
-                        : undefined
+                        : {
+                            borderColor: "rgba(229,231,238,0.78)",
+                            boxShadow: "0 14px 34px rgba(15,23,42,0.05)",
+                          }
                     }
                   >
                     <div className="flex items-center gap-4">
@@ -393,14 +422,18 @@ export function DashboardPage() {
 
           <GlassPanel
             index={3}
-            className="bg-card/90"
+            className="bg-white/95"
             style={
               isDark
                 ? {
                     background: "linear-gradient(180deg, rgba(16,18,24,0.98), rgba(10,12,17,0.96))",
                     borderColor: "rgba(255,255,255,0.08)",
                   }
-                : undefined
+                : {
+                    background: "rgba(255,255,255,0.95)",
+                    borderColor: "rgba(229,231,238,0.82)",
+                    boxShadow: "0 16px 44px rgba(15,23,42,0.08)",
+                  }
             }
           >
             <SectionTitle
@@ -421,7 +454,10 @@ export function DashboardPage() {
                             background: "linear-gradient(180deg, rgba(29,23,25,0.98), rgba(22,18,19,0.98))",
                             borderColor: "rgba(225,48,108,0.18)",
                           }
-                        : undefined
+                        : {
+                            background: "linear-gradient(135deg, rgba(255,248,250,0.98), rgba(255,245,240,0.98))",
+                            borderColor: "rgba(225,48,108,0.10)",
+                          }
                     }
                   >
                     <div className="flex flex-wrap items-center gap-2">
@@ -457,14 +493,18 @@ export function DashboardPage() {
         <div className="grid gap-6 2xl:grid-cols-[0.95fr_1.05fr]">
           <GlassPanel
             index={4}
-            className="bg-card/90"
+            className="bg-white/95"
             style={
               isDark
                 ? {
                     background: "linear-gradient(180deg, rgba(16,18,24,0.98), rgba(10,12,17,0.96))",
                     borderColor: "rgba(255,255,255,0.08)",
                   }
-                : undefined
+                : {
+                    background: "rgba(255,255,255,0.95)",
+                    borderColor: "rgba(229,231,238,0.82)",
+                    boxShadow: "0 16px 44px rgba(15,23,42,0.08)",
+                  }
             }
           >
             <SectionTitle
@@ -514,14 +554,18 @@ export function DashboardPage() {
 
           <GlassPanel
             index={5}
-            className="bg-card/90"
+            className="bg-white/95"
             style={
               isDark
                 ? {
                     background: "linear-gradient(180deg, rgba(16,18,24,0.98), rgba(10,12,17,0.96))",
                     borderColor: "rgba(255,255,255,0.08)",
                   }
-                : undefined
+                : {
+                    background: "rgba(255,255,255,0.95)",
+                    borderColor: "rgba(229,231,238,0.82)",
+                    boxShadow: "0 16px 44px rgba(15,23,42,0.08)",
+                  }
             }
           >
             <SectionTitle

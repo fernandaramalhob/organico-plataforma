@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CalendarDays, ChevronLeft, ChevronRight, PencilLine, Plus, Target, Users, X } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, PencilLine, Plus, Users, X } from "lucide-react";
 import { toast } from "sonner";
-import { goals, getGoalResponsibleIds, type Goal } from "../data/mockData";
+import { goals, getGoalResponsibleIds, type Goal, type GoalChecklistItem } from "../data/mockData";
 import { useTeamProfiles } from "../data/profiles";
 import { useSupabaseSyncedListState } from "../data/supabaseSync";
 import { matchesTeamScope, useTeamScope } from "../data/teamScope";
@@ -26,6 +26,7 @@ type GoalFormState = {
   period: string;
   deadline: string;
   responsibleIds: number[];
+  checklist: GoalChecklistItem[];
 };
 
 type TeamMemberCard = { id: number; name: string; role: string; color: string; avatarUrl: string };
@@ -41,6 +42,15 @@ function createInitialGoalForm(teamMembers: TeamMemberCard[]): GoalFormState {
     period: "Mês",
     deadline: "",
     responsibleIds: teamMembers[0] ? [teamMembers[0].id] : [],
+    checklist: [],
+  };
+}
+
+function createChecklistItem(label: string): GoalChecklistItem {
+  return {
+    id: `goal-check-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    label,
+    done: false,
   };
 }
 
@@ -355,6 +365,7 @@ export function GoalsPage() {
   const [editingGoalId, setEditingGoalId] = useState<number | null>(null);
   const [pendingDelete, setPendingDelete] = useState<{ goalId: number; goalName: string } | null>(null);
   const [form, setForm] = useState<GoalFormState>(() => createInitialGoalForm(teamMembers));
+  const [checklistDraft, setChecklistDraft] = useState("");
   const migratedGoalsRef = useRef(false);
 
   const teamCards = teamMembers as TeamMemberCard[];
@@ -416,6 +427,7 @@ export function GoalsPage() {
       period: editingGoal.period,
       deadline: editingGoal.deadline,
       responsibleIds: getGoalResponsibleIds(editingGoal),
+      checklist: editingGoal.checklist ?? [],
     });
   }, [editingGoal, isCreateOpen]);
 
@@ -474,6 +486,7 @@ export function GoalsPage() {
   function openCreateGoal() {
     setEditingGoalId(null);
     setForm(createInitialGoalForm(teamCards));
+    setChecklistDraft("");
     setIsCreateOpen(true);
   }
 
@@ -493,7 +506,9 @@ export function GoalsPage() {
       period: goal.period,
       deadline: goal.deadline,
       responsibleIds: getGoalResponsibleIds(goal),
+      checklist: goal.checklist ?? [],
     });
+    setChecklistDraft("");
     setIsCreateOpen(true);
   }
 
@@ -501,6 +516,7 @@ export function GoalsPage() {
     setIsCreateOpen(false);
     setEditingGoalId(null);
     setForm(createInitialGoalForm(teamCards));
+    setChecklistDraft("");
   }
 
   const toggleResponsible = (memberId: number) => {
@@ -522,6 +538,40 @@ export function GoalsPage() {
     setForm((previous) => ({
       ...previous,
       responsibleIds: selectedIds,
+    }));
+  };
+
+  const addChecklistItem = (label: string) => {
+    const normalizedLabel = label.trim();
+
+    if (!normalizedLabel) {
+      return;
+    }
+
+    setForm((previous) => ({
+      ...previous,
+      checklist: [...previous.checklist, createChecklistItem(normalizedLabel)],
+    }));
+  };
+
+  const updateChecklistItem = (itemId: string, nextLabel: string) => {
+    setForm((previous) => ({
+      ...previous,
+      checklist: previous.checklist.map((item) => (item.id === itemId ? { ...item, label: nextLabel } : item)),
+    }));
+  };
+
+  const toggleChecklistItem = (itemId: string) => {
+    setForm((previous) => ({
+      ...previous,
+      checklist: previous.checklist.map((item) => (item.id === itemId ? { ...item, done: !item.done } : item)),
+    }));
+  };
+
+  const removeChecklistItem = (itemId: string) => {
+    setForm((previous) => ({
+      ...previous,
+      checklist: previous.checklist.filter((item) => item.id !== itemId),
     }));
   };
 
@@ -552,6 +602,7 @@ export function GoalsPage() {
       period: form.period,
       deadline: form.deadline,
       description: form.description.trim(),
+      checklist: form.checklist.map((item) => ({ ...item, label: item.label.trim() })).filter((item) => item.label.length > 0),
     };
 
     if (editingGoalId !== null) {
@@ -682,34 +733,55 @@ export function GoalsPage() {
             const isGroupGoal = assigneeIds.length > 1;
 
             return (
-              <GlassPanel
+              <div
                 key={goal.id}
-                index={index + 1}
-                className="group relative h-full overflow-hidden p-6"
-                style={{
-                  background: isDark
-                    ? "linear-gradient(180deg, rgba(24,24,26,0.98), rgba(16,16,18,0.96))"
-                    : "linear-gradient(180deg, rgba(255,255,255,0.99), rgba(250,250,250,0.96))",
-                  borderColor: `${primaryMember?.color ?? "#e50914"}22`,
-                  boxShadow: `0 14px 28px ${primaryMember?.color ?? "#e50914"}0d`,
-                  borderLeftWidth: "4px",
-                  borderLeftColor: primaryMember?.color ?? "#e50914",
+                role="button"
+                tabIndex={0}
+                onClick={() => openEditGoal(goal.id)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    openEditGoal(goal.id);
+                  }
                 }}
+                className="group relative h-full cursor-pointer transition hover:-translate-y-0.5"
               >
+                <GlassPanel
+                  index={index + 1}
+                  className="overflow-hidden p-6"
+                  style={{
+                    background: isDark
+                      ? "linear-gradient(180deg, rgba(24,24,26,0.98), rgba(16,16,18,0.96))"
+                      : "linear-gradient(180deg, rgba(255,255,255,0.99), rgba(250,250,250,0.96))",
+                    borderColor: `${primaryMember?.color ?? "#e50914"}22`,
+                    boxShadow: `0 14px 28px ${primaryMember?.color ?? "#e50914"}0d`,
+                    borderLeftWidth: "4px",
+                    borderLeftColor: primaryMember?.color ?? "#e50914",
+                  }}
+                >
                 <div className="absolute right-4 top-4 z-10 flex gap-2 opacity-0 transition group-hover:opacity-100">
                   <button
                     type="button"
-                    onClick={() => openEditGoal(goal.id)}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      openEditGoal(goal.id);
+                    }}
                     className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/60 bg-white text-muted-foreground shadow-sm transition hover:border-primary/25 hover:text-foreground dark:border-white/8 dark:bg-card/90"
                     aria-label="Editar meta"
                     title="Editar meta"
                   >
                     <PencilLine className="h-4 w-4" />
                   </button>
-                  <DeleteIconButton onClick={() => setPendingDelete({ goalId: goal.id, goalName: goal.name })} />
+                  <div
+                    onClick={(event) => {
+                      event.stopPropagation();
+                    }}
+                  >
+                    <DeleteIconButton onClick={() => setPendingDelete({ goalId: goal.id, goalName: goal.name })} />
+                  </div>
                 </div>
 
-                <div className="flex h-full flex-col gap-5">
+                  <div className="flex h-full flex-col gap-5">
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div className="min-w-0 space-y-3">
                       <div className="flex flex-wrap items-center gap-2">
@@ -776,33 +848,28 @@ export function GoalsPage() {
                     </div>
                   </div>
                 </div>
-              </GlassPanel>
+                </GlassPanel>
+              </div>
             );
           })}
         </div>
 
         {isCreateOpen ? (
           <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-md"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-3 backdrop-blur-md sm:p-4"
             onClick={closeModal}
           >
             <div
-              className="w-full max-w-4xl overflow-hidden rounded-[3.5rem] border border-border/60 bg-white shadow-[0_34px_110px_rgba(15,23,42,0.24)] dark:border-white/8 dark:bg-card/98"
+              className="w-full max-w-[min(94vw,920px)] max-h-[calc(100vh-24px)] overflow-y-auto overscroll-contain rounded-[2.5rem] border border-border/60 bg-white shadow-[0_34px_110px_rgba(15,23,42,0.24)] dark:border-white/8 dark:bg-card/98 sm:max-h-[calc(100vh-32px)] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
               onClick={(event) => event.stopPropagation()}
             >
-              <div className="grid lg:grid-cols-[1.08fr_0.92fr]">
+              <div className="block">
                 <div className="p-5 sm:p-6">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                        {editingGoalId !== null ? "Editar Meta" : "Nova Meta"}
-                      </p>
-                      <h3 className="mt-2 text-3xl font-semibold tracking-tight text-foreground">
-                        {editingGoalId !== null ? "Editar meta completa" : "Criar meta completa"}
+                      <h3 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+                        Nova Meta
                       </h3>
-                      <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-                        Defina uma meta individual ou em grupo, distribua responsáveis e escolha o prazo em um calendário visual.
-                      </p>
                     </div>
                     <button
                       type="button"
@@ -933,14 +1000,7 @@ export function GoalsPage() {
                       <div className="mb-2 flex items-center justify-between gap-3">
                         <div>
                           <span className="block text-sm font-medium text-foreground">Data limite</span>
-                          <span className="block text-xs text-muted-foreground">
-                            Escolha a data no calendário para ficar exata.
-                          </span>
                         </div>
-                        <span className="inline-flex items-center gap-2 rounded-full bg-muted/50 px-3 py-1 text-xs font-semibold text-muted-foreground">
-                          <CalendarDays className="h-3.5 w-3.5" />
-                          Calendário
-                        </span>
                       </div>
                       <GoalDatePicker
                         value={form.deadline}
@@ -980,65 +1040,88 @@ export function GoalsPage() {
                         className="rounded-[1.5rem] border border-border/70 bg-background px-4 py-3 text-sm outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/10 dark:bg-white/5"
                       />
                     </label>
+
+                    <div className="grid gap-3 md:col-span-2">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <span className="text-sm font-medium text-foreground">Checklist da meta</span>
+                        </div>
+                        <span className="rounded-full bg-muted/50 px-3 py-1 text-xs font-semibold text-muted-foreground">
+                          {form.checklist.filter((item) => item.done).length}/{form.checklist.length || 0} concluídas
+                        </span>
+                      </div>
+
+                      <div className="flex flex-col gap-2 rounded-[1.5rem] border border-border/70 bg-background p-3 sm:flex-row">
+                        <input
+                          value={checklistDraft}
+                          onChange={(event) => setChecklistDraft(event.target.value)}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter") {
+                              event.preventDefault();
+                              addChecklistItem(checklistDraft);
+                              setChecklistDraft("");
+                            }
+                          }}
+                          placeholder="Ex.: Escrever roteiro da etapa 1"
+                          className="min-w-0 flex-1 rounded-2xl border border-border/70 bg-white px-4 py-3 text-sm outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/10 dark:bg-white/5"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            addChecklistItem(checklistDraft);
+                            setChecklistDraft("");
+                          }}
+                          className="inline-flex items-center justify-center rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
+                        >
+                          Adicionar item
+                        </button>
+                      </div>
+
+                      {form.checklist.length > 0 ? (
+                        <div className="space-y-2">
+                          {form.checklist.map((item) => (
+                            <div
+                              key={item.id}
+                              className="flex items-center gap-3 rounded-[1.35rem] border border-border/60 bg-white p-3 shadow-sm dark:bg-card/80"
+                            >
+                              <button
+                                type="button"
+                                onClick={() => toggleChecklistItem(item.id)}
+                                className={cn(
+                                  "inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border transition",
+                                  item.done
+                                    ? "border-primary bg-primary text-primary-foreground"
+                                    : "border-border/60 bg-background text-transparent hover:border-primary/30",
+                                )}
+                                aria-label={item.done ? "Desmarcar item" : "Marcar item"}
+                              >
+                                ✓
+                              </button>
+                              <input
+                                value={item.label}
+                                onChange={(event) => updateChecklistItem(item.id, event.target.value)}
+                                className={cn(
+                                  "min-w-0 flex-1 bg-transparent text-sm outline-none",
+                                  item.done && "text-muted-foreground line-through",
+                                )}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeChecklistItem(item.id)}
+                                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                                aria-label="Remover item"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
 
-                <div className="border-t border-border/60 bg-gradient-to-b from-primary/5 to-transparent p-5 sm:p-6 lg:border-l lg:border-t-0">
-                      <div className="rounded-[2.25rem] border border-border/60 bg-white p-4 shadow-sm dark:bg-card/90">
-                    <div className="flex items-center gap-3">
-                      <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                        <Target className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Pré-visualização</p>
-                        <p className="mt-1 text-lg font-semibold text-foreground">{form.name || "Sua nova meta"}</p>
-                      </div>
-                    </div>
-
-                    <div className="mt-5 space-y-3 rounded-[2rem] bg-muted/35 p-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-sm text-muted-foreground">Responsáveis</span>
-                        <span className="text-sm font-semibold text-foreground">{form.responsibleIds.length}</span>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {teamCards
-                          .filter((member) => form.responsibleIds.includes(member.id))
-                          .map((member) => (
-                            <span
-                              key={member.id}
-                              className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold"
-                              style={{ backgroundColor: `${member.color}14`, color: member.color }}
-                            >
-                              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: member.color }} />
-                              {member.name}
-                            </span>
-                          ))}
-                      </div>
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-sm text-muted-foreground">Prazo</span>
-                        <span className="text-sm font-semibold text-foreground">
-                          {form.deadline ? formatDeadlineLabel(form.deadline) : "Sem data"}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                      <div className="rounded-[1.8rem] border border-border/60 bg-muted/20 p-4">
-                        <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Meta</p>
-                        <p className="mt-2 text-lg font-semibold text-foreground">{form.target || "0"}</p>
-                      </div>
-                      <div className="rounded-[1.8rem] border border-border/60 bg-muted/20 p-4">
-                        <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Atual</p>
-                        <p className="mt-2 text-lg font-semibold text-foreground">{form.current || "0"}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-5 rounded-[1.6rem] border border-dashed border-border/60 bg-background/70 p-4 text-sm leading-6 text-muted-foreground dark:bg-white/5">
-                    Dica: metas em grupo funcionam melhor quando você divide o objetivo por etapa, seleciona todos os responsáveis e define um prazo visual.
-                  </div>
-
-                  <div className="mt-5 flex flex-wrap justify-end gap-3">
+                  <div className="mt-6 flex flex-wrap justify-end gap-3 border-t border-border/60 pt-5">
                     <ActionButton variant="secondary" onClick={closeModal}>
                       Cancelar
                     </ActionButton>
@@ -1050,7 +1133,6 @@ export function GoalsPage() {
                 </div>
               </div>
             </div>
-          </div>
         ) : null}
 
         {pendingDelete ? (
@@ -1065,3 +1147,4 @@ export function GoalsPage() {
     </PageTransition>
   );
 }
+
