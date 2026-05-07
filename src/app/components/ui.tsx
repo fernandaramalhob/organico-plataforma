@@ -76,7 +76,7 @@ export function GlassPanel({
       initial="hidden"
       animate="visible"
       className={cn(
-        "rounded-3xl border border-border/70 bg-white/96 p-5 shadow-[0_18px_48px_rgba(15,23,42,0.06)] backdrop-blur-xl transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_24px_60px_rgba(15,23,42,0.08)] dark:border-white/6 dark:bg-[linear-gradient(180deg,rgba(19,23,31,0.96),rgba(12,15,21,0.98))] dark:shadow-[0_18px_48px_rgba(0,0,0,0.28)]",
+        "rounded-3xl border border-border/70 bg-white p-5 shadow-[0_18px_48px_rgba(15,23,42,0.06)] backdrop-blur-xl transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_24px_60px_rgba(15,23,42,0.08)] dark:border-white/6 dark:bg-[linear-gradient(180deg,rgba(19,23,31,0.96),rgba(12,15,21,0.98))] dark:shadow-[0_18px_48px_rgba(0,0,0,0.28)]",
         className,
       )}
       style={style}
@@ -151,7 +151,7 @@ export function ActionButton({
     primary:
       "bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90 dark:bg-[#ff3b4e] dark:shadow-[0_14px_34px_rgba(255,59,78,0.22)] dark:hover:bg-[#ff5161]",
     secondary:
-      "bg-muted text-foreground hover:bg-muted/80 dark:bg-[#1a2029] dark:hover:bg-[#222833]",
+      "border border-border/70 bg-white text-foreground shadow-sm hover:bg-muted/60 dark:bg-[#1a2029] dark:hover:bg-[#222833]",
     ghost: "bg-transparent text-foreground hover:bg-muted/70 dark:hover:bg-white/6",
   };
 
@@ -209,7 +209,7 @@ export function RoundedDropdown<T extends string | number>({
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        className="flex w-full items-center justify-between gap-3 rounded-full border border-border/70 bg-background px-4 py-3 text-sm transition hover:border-primary/25 hover:shadow-sm dark:border-white/8 dark:bg-[#171c25] dark:text-foreground dark:hover:bg-[#1f2631]"
+        className="flex w-full items-center justify-between gap-3 rounded-full border border-border/70 bg-white px-4 py-3 text-sm transition hover:border-primary/25 hover:shadow-sm dark:border-white/8 dark:bg-[#171c25] dark:text-foreground dark:hover:bg-[#1f2631]"
       >
         <span className="flex items-center gap-3 text-left">
           {selectedOption?.color ? (
@@ -223,7 +223,7 @@ export function RoundedDropdown<T extends string | number>({
       </button>
 
       {open ? (
-        <div className="absolute left-0 top-full z-50 mt-2 w-full rounded-[1.75rem] border border-border/70 bg-background p-2 shadow-[0_24px_60px_rgba(15,23,42,0.14)] dark:border-white/8 dark:bg-[#121821] dark:shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
+        <div className="absolute left-0 top-full z-50 mt-2 w-full rounded-[1.75rem] border border-border/70 bg-white p-2 shadow-[0_24px_60px_rgba(15,23,42,0.14)] dark:border-white/8 dark:bg-[#121821] dark:shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
           <p className="px-3 pb-2 pt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
             {label}
           </p>

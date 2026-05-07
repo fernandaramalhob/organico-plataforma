@@ -6,14 +6,14 @@
   --success: 52 199 89;
   --warning: 255 204 0;
   --destructive: 255 59 48;
-  --background: 244 245 247;
+  --background: 250 251 253;
   --foreground: 26 26 26;
   --card: 255 255 255;
   --card-foreground: 26 26 26;
-  --sidebar: 247 248 250;
-  --muted: 245 245 247;
+  --sidebar: 255 255 255;
+  --muted: 248 249 251;
   --muted-foreground: 110 110 115;
-  --border: 232 232 237;
+  --border: 229 231 235;
   --ring: 209 0 0;
   --shadow: 15 23 42;
   --radius: 1.25rem;

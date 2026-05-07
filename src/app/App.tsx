@@ -70,7 +70,7 @@ function AppShell({ onLogout }: { onLogout: () => void }) {
       style={{
         background: isDark
           ? "radial-gradient(circle at 12% 12%, rgba(131,58,180,0.09), transparent 22%), radial-gradient(circle at 88% 8%, rgba(225,48,108,0.08), transparent 18%), linear-gradient(180deg, rgb(8,10,15) 0%, rgb(10,13,19) 100%)"
-          : "radial-gradient(circle at 14% 0%, rgba(131,58,180,0.06), transparent 24%), radial-gradient(circle at 86% 10%, rgba(225,48,108,0.04), transparent 18%), linear-gradient(180deg, rgb(246,247,250) 0%, rgb(236,240,246) 100%)",
+          : "linear-gradient(180deg, rgb(252,253,255) 0%, rgb(247,248,250) 100%)",
       }}
     >
       <Sidebar onLogout={onLogout} />
@@ -80,8 +80,8 @@ function AppShell({ onLogout }: { onLogout: () => void }) {
           style={{
             background: isDark
               ? "linear-gradient(180deg, rgba(15,18,25,0.96) 0%, rgba(11,14,20,0.98) 100%)"
-              : "linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(255,255,255,0.92) 100%)",
-            boxShadow: isDark ? "0 30px 90px rgba(0,0,0,0.42)" : "0 18px 50px rgba(16,24,40,0.08)",
+              : "linear-gradient(180deg, rgba(255,255,255,0.99) 0%, rgba(255,255,255,0.96) 100%)",
+            boxShadow: isDark ? "0 30px 90px rgba(0,0,0,0.42)" : "0 18px 50px rgba(16,24,40,0.06)",
             border: isDark ? "1px solid rgba(255,255,255,0.05)" : "1px solid rgba(255,255,255,0.9)",
           }}
         >
