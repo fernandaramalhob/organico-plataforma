@@ -9,6 +9,7 @@ import { useThemeMode } from "../theme";
 import {
   ConfirmDialog,
   DeleteIconButton,
+  EmptyState,
   FilterPill,
   GlassPanel,
   MemberChip,
@@ -238,11 +239,7 @@ export function HistoryPage() {
 
             <FilterDropdown<"todos" | "post" | "goal" | "schedule">
               label="Tipo"
-              valueLabel={
-                typeFilter === "todos"
-                  ? "Todos os tipos"
-                  : typeLabels[typeFilter]
-              }
+              valueLabel={typeFilter === "todos" ? "Todos os tipos" : typeLabels[typeFilter]}
               onChange={(value) => setTypeFilter(value)}
               options={[
                 { label: "Todos os tipos", value: "todos" as const },
@@ -255,7 +252,12 @@ export function HistoryPage() {
         </div>
       </GlassPanel>
 
-      {view === "Timeline" ? (
+      {items.length === 0 ? (
+        <EmptyState
+          title="Nenhum registro encontrado"
+          description="Tente limpar os filtros para ver o histórico completo da operação."
+        />
+      ) : view === "Timeline" ? (
         <div className="grid gap-4">
           {items.map((item, index) => {
             const member = teamMembers.find((person) => person.id === item.authorId)!;
@@ -266,8 +268,8 @@ export function HistoryPage() {
                 key={item.id}
                 index={index + 2}
                 className="group relative"
-                  style={timelineCardStyle(member.color)}
-                >
+                style={timelineCardStyle(member.color)}
+              >
                 <div className="absolute right-4 top-4 z-10 opacity-0 transition group-hover:opacity-100">
                   <DeleteIconButton onClick={() => setPendingDelete({ historyId: item.id, historyTitle: item.title })} />
                 </div>
@@ -320,14 +322,14 @@ export function HistoryPage() {
                   <th className="px-5 py-4">Responsável</th>
                   <th className="px-5 py-4">Data</th>
                   <th className="px-5 py-4">Resultado</th>
-                  <th className="px-5 py-4">AÃ§Ãµes</th>
+                  <th className="px-5 py-4">Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {items.map((item) => {
                   const member = teamMembers.find((person) => person.id === item.authorId)!;
 
-                    return (
+                  return (
                     <tr key={item.id} className="border-t border-border/60">
                       <td className="px-5 py-4">
                         <p className="font-medium text-foreground">{item.title}</p>

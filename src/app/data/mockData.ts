@@ -378,7 +378,58 @@ export const goals: Goal[] = (() => {
 export const calendarEvents: CalendarEvent[] = [];
 export const storyLogs: StoryLog[] = [];
 export const ideas: Idea[] = [];
-export const historyTimeline: HistoryEvent[] = [];
+export const historyTimeline: HistoryEvent[] = [
+  {
+    id: 1,
+    type: "post",
+    title: "Post de reels publicado",
+    description: "Brenda publicou o reels de bastidores com fechamento forte.",
+    authorId: 1,
+    date: "2026-04-28",
+    result: "4,8 mil de engajamento no primeiro dia",
+    metrics: "54 mil de alcance",
+  },
+  {
+    id: 2,
+    type: "goal",
+    title: "Meta de stories concluída",
+    description: "A equipe fechou os 168 stories no período com uma distribuição flexível entre os três membros.",
+    authorId: 2,
+    date: "2026-04-30",
+    result: "Meta coletiva batida",
+    metrics: "100% concluído",
+  },
+  {
+    id: 3,
+    type: "schedule",
+    title: "Calendário ajustado",
+    description: "Thiago reorganizou a fila do carrossel para encaixar melhor a aprovação.",
+    authorId: 3,
+    date: "2026-05-01",
+    result: "Entrega mantida dentro do prazo",
+    metrics: "1 ajuste no fluxo",
+  },
+  {
+    id: 4,
+    type: "post",
+    title: "Stories de conversão no ar",
+    description: "Hannah publicou a sequência com foco em resposta e prova social.",
+    authorId: 2,
+    date: "2026-05-02",
+    result: "Respostas orgânicas acima da média",
+    metrics: "1,5 mil interações",
+  },
+  {
+    id: 5,
+    type: "goal",
+    title: "Revisão do mês feita",
+    description: "Fechamento com leitura dos cards, dos grupos e das próximas metas.",
+    authorId: 1,
+    date: "2026-05-03",
+    result: "Planejamento do próximo ciclo iniciado",
+    metrics: "4 metas acompanhadas",
+  },
+];
 
 export const insights = {
   bestTime: {
