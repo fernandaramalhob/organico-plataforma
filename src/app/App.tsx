@@ -41,7 +41,7 @@ function AppRouter() {
   const { session, ready } = useAuthSession();
 
   if (!ready) {
-    return null;
+    return <RouteLoading />;
   }
 
   if (!session) {

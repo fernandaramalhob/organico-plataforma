@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useSupabasePreference } from "./userPreferences";
 import { isSupabaseConfigured, supabase } from "./supabase";
 
 type RowEnvelope<T> = {
@@ -30,10 +31,11 @@ export function useSupabaseSyncedListState<T extends { id: number }>(options: {
   const hydratedRef = useRef(false);
   const lastRemoteSnapshotRef = useRef<string | null>(null);
   const lastRemoteIdsRef = useRef<number[]>([]);
+  const [hasSeededTable, setHasSeededTable, seedReady] = useSupabasePreference<boolean>(`sync-seeded:${options.table}`, false);
   const supabaseClient = supabase;
 
   useEffect(() => {
-    if (!isSupabaseConfigured() || !supabaseClient) {
+    if (!isSupabaseConfigured() || !supabaseClient || !seedReady) {
       return;
     }
 
@@ -62,6 +64,10 @@ export function useSupabaseSyncedListState<T extends { id: number }>(options: {
         .filter((item): item is T => Boolean(item) && normalizeId((item as { id?: unknown }).id) !== null);
 
       if (remoteItems.length > 0) {
+        if (!hasSeededTable) {
+          setHasSeededTable(true);
+        }
+
         lastRemoteSnapshotRef.current = JSON.stringify(remoteItems);
         lastRemoteIdsRef.current = remoteItems.map((item) => item.id);
         setValue(remoteItems);
@@ -70,25 +76,35 @@ export function useSupabaseSyncedListState<T extends { id: number }>(options: {
         return;
       }
 
-      const seedRows = options.fallback.map((item, index) => toRowEnvelope(item, index));
-      const { error: seedError } = await supabaseClient.from(options.table).upsert(seedRows, {
-        onConflict: "id",
-      });
+      if (!hasSeededTable) {
+        const seedRows = options.fallback.map((item, index) => toRowEnvelope(item, index));
+        const { error: seedError } = await supabaseClient.from(options.table).upsert(seedRows, {
+          onConflict: "id",
+        });
 
-      if (cancelled) {
-        return;
-      }
+        if (cancelled) {
+          return;
+        }
 
-      if (seedError) {
-        console.warn(`Supabase ${options.table} seed failed:`, seedError.message);
+        if (seedError) {
+          console.warn(`Supabase ${options.table} seed failed:`, seedError.message);
+          hydratedRef.current = true;
+          setHydrated(true);
+          return;
+        }
+
+        setHasSeededTable(true);
+        lastRemoteSnapshotRef.current = JSON.stringify(options.fallback);
+        lastRemoteIdsRef.current = options.fallback.map((item) => item.id);
+        setValue(options.fallback);
         hydratedRef.current = true;
         setHydrated(true);
         return;
       }
 
-      lastRemoteSnapshotRef.current = JSON.stringify(options.fallback);
-      lastRemoteIdsRef.current = options.fallback.map((item) => item.id);
-      setValue(options.fallback);
+      lastRemoteSnapshotRef.current = "[]";
+      lastRemoteIdsRef.current = [];
+      setValue([]);
       hydratedRef.current = true;
       setHydrated(true);
     };
@@ -98,7 +114,7 @@ export function useSupabaseSyncedListState<T extends { id: number }>(options: {
     return () => {
       cancelled = true;
     };
-  }, [options.fallback, options.table, supabaseClient, setValue]);
+  }, [hasSeededTable, options.fallback, options.table, seedReady, setHasSeededTable, supabaseClient, setValue]);
 
   useEffect(() => {
     if (!hydratedRef.current || !isSupabaseConfigured() || !supabaseClient) {
@@ -148,7 +164,7 @@ export function useSupabaseSyncedListState<T extends { id: number }>(options: {
     return () => {
       cancelled = true;
     };
-  }, [options.table, supabaseClient, value]);
+  }, [options.table, supabaseClient, value, seedReady]);
 
   return [value, setValue, hydrated] as const;
 }

@@ -128,9 +128,7 @@ export function useTeamProfiles() {
     let cancelled = false;
 
     const persistTeamProfiles = async () => {
-      const currentProfile =
-        normalizedProfiles.find((profile) => profile.userId === currentUserId) ??
-        normalizedProfiles.find((profile) => profile.email.toLowerCase() === (session?.user.email ?? "").toLowerCase());
+      const currentProfile = normalizedProfiles.find((profile) => profile.userId === currentUserId);
 
       if (!currentProfile) {
         return;
@@ -173,18 +171,14 @@ export function useCurrentTeamMember() {
   const [profiles, setProfiles] = useTeamProfiles();
   const { session } = useAuthSession();
   const memberId = session?.user.id ?? null;
-  const memberEmail = session?.user.email?.toLowerCase() ?? null;
 
   const member = useMemo(() => {
-    if (!memberId && !memberEmail) {
+    if (!memberId) {
       return null;
     }
 
-    return (
-      profiles.find((item) => item.userId === memberId) ??
-      (memberEmail ? profiles.find((item) => item.email.toLowerCase() === memberEmail) ?? null : null)
-    );
-  }, [memberEmail, memberId, profiles]);
+    return profiles.find((item) => item.userId === memberId) ?? null;
+  }, [memberId, profiles]);
 
   const updateMember = (memberIdToUpdate: number, updater: (current: EditableTeamMember) => EditableTeamMember) => {
     setProfiles((previous) =>

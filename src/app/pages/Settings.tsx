@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { ActionButton, GlassPanel, PageHeader, SectionTitle, cn } from "../components/ui";
@@ -13,6 +13,11 @@ export function SettingsPage() {
     () => Boolean(metaConfig.pageId.trim() || metaConfig.instagramUserId.trim()),
     [metaConfig.pageId, metaConfig.instagramUserId],
   );
+
+  useEffect(() => {
+    setPageId(metaConfig.pageId);
+    setInstagramUserId(metaConfig.instagramUserId);
+  }, [metaConfig.pageId, metaConfig.instagramUserId]);
 
   const saveMetaConfig = () => {
     setMetaConfig({

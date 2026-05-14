@@ -464,7 +464,7 @@ export function GoalsPage() {
   }, [editingGoal, isCreateOpen]);
 
   useEffect(() => {
-    if (goalSeedMigrationAppliedRef.current || teamCards.length < 2 || items.length === 0) {
+    if (goalSeedMigrationAppliedRef.current || items.length === 0) {
       return;
     }
 
@@ -473,32 +473,26 @@ export function GoalsPage() {
       return;
     }
 
-    const nextItems = items.map((goal, index) => {
-      if (index === 0) {
-        return {
-          ...goal,
-          responsibleId: teamCards[0].id,
-          responsibleIds: [teamCards[0].id, teamCards[1].id],
-        };
+    const legacyResponsibleMap = new Map<number, number[]>([
+      [1, [1, 2]],
+      [2, [2, 3]],
+      [4, [1, 2, 3]],
+    ]);
+
+    const nextItems = items.map((goal) => {
+      const nextResponsibleIds = legacyResponsibleMap
+        .get(goal.id)
+        ?.filter((memberId) => teamCards.some((member) => member.id === memberId));
+
+      if (!nextResponsibleIds || nextResponsibleIds.length === 0) {
+        return goal;
       }
 
-      if (index === 1 && teamCards[2]) {
-        return {
-          ...goal,
-          responsibleId: teamCards[1].id,
-          responsibleIds: [teamCards[1].id, teamCards[2].id],
-        };
-      }
-
-      if (index === 4) {
-        return {
-          ...goal,
-          responsibleId: teamCards[1].id,
-          responsibleIds: teamCards.map((member) => member.id),
-        };
-      }
-
-      return goal;
+      return {
+        ...goal,
+        responsibleId: nextResponsibleIds[0],
+        responsibleIds: nextResponsibleIds,
+      };
     });
 
     goalSeedMigrationAppliedRef.current = true;
