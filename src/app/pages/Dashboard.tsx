@@ -329,17 +329,6 @@ export function DashboardPage() {
       to: "/calendar",
       destinationLabel: "Abrir calendário",
     },
-    {
-      id: "checklist",
-      label: "Checklist concluído",
-      value: `${calendarChecklistTotals.done}/${calendarChecklistTotals.items}`,
-      change: 0,
-      highlight: calendarChecklistTotals.items > 0
-        ? "Itens marcados no calendário alimentam este número."
-        : "Nenhum item de checklist encontrado no recorte.",
-      to: "/checklist",
-      destinationLabel: "Ver checklist",
-    },
   ] as const;
   const evolutionBuckets = visiblePosts.reduce<Map<string, { date: string; reach: number; engagement: number }>>(
     (acc, post) => {

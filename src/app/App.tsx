@@ -17,7 +17,6 @@ import { LoginPage } from "./pages/Login";
 import { PostDetailPage } from "./pages/PostDetail";
 import { ReportPreviewPage } from "./pages/ReportPreview";
 import { ReportsPage } from "./pages/Reports";
-import { UsabilityChecklistPage } from "./pages/UsabilityChecklist";
 import { SettingsPage } from "./pages/Settings";
 import { StoriesPage } from "./pages/Stories";
 import { TeamPage } from "./pages/Team";
@@ -105,7 +104,6 @@ function AppShell({ onLogout }: { onLogout: () => void }) {
               <Route path="/history" element={<HistoryPage />} />
               <Route path="/reports" element={<ReportsPage />} />
               <Route path="/reports/preview" element={<ReportPreviewPage />} />
-              <Route path="/checklist" element={<UsabilityChecklistPage />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/profile" element={<MyProfilePage />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />

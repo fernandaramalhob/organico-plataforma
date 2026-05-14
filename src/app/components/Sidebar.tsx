@@ -4,7 +4,6 @@ import {
   Calendar,
   Camera,
   CheckCircle2,
-  ClipboardList,
   FileText,
   History,
   LayoutDashboard,
@@ -22,14 +21,13 @@ import { useThemeMode } from "../theme";
 const navigation = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/meta-insights", label: "Meta Insights", icon: Target },
-  { to: "/calendar", label: "CalendÃ¡rio", icon: Calendar },
+  { to: "/calendar", label: "Calendário", icon: Calendar },
   { to: "/goals", label: "Metas", icon: CheckCircle2 },
   { to: "/stories", label: "Stories", icon: Camera },
   { to: "/ideas", label: "Ideias", icon: Lightbulb },
   { to: "/team", label: "Equipe", icon: Users },
-  { to: "/history", label: "HistÃ³rico", icon: History },
-  { to: "/reports", label: "RelatÃ³rios", icon: FileText },
-  { to: "/checklist", label: "Checklist", icon: ClipboardList },
+  { to: "/history", label: "Histórico", icon: History },
+  { to: "/reports", label: "Relatórios", icon: FileText },
 ];
 
 export function Sidebar({ onLogout }: { onLogout?: () => void }) {
@@ -118,47 +116,43 @@ export function Sidebar({ onLogout }: { onLogout?: () => void }) {
                 )
               }
             >
-              <Icon className="h-[17px] w-[17px] shrink-0" />
-              {label}
+              <Icon className="h-4.5 w-4.5 shrink-0" />
+              <span>{label}</span>
             </NavLink>
           ))}
         </nav>
 
-        <div className="mt-auto space-y-3 pb-2 pt-10">
-          <div className="space-y-3">
-            <NavLink
-              to="/settings"
-              className={({ isActive }) =>
-                cn(
-                  "flex items-center gap-4 rounded-full border px-4 py-3 text-[15px] font-medium transition",
-                  isActive
-                    ? "border-primary bg-primary text-white shadow-[0_18px_40px_rgba(229,20,20,0.28)]"
-                    : isDark
-                      ? "border-transparent text-slate-300/90 hover:bg-primary/10 hover:text-white"
-                      : "border-transparent text-slate-600 hover:bg-primary/8 hover:text-primary",
-                )
-              }
-            >
-              <Settings className="h-4 w-4 shrink-0" />
-              Configurações
-            </NavLink>
-
-            {onLogout ? (
-              <button
-                type="button"
-                onClick={onLogout}
-                className={cn(
-                  "flex w-full items-center gap-4 rounded-full border px-4 py-3 text-[15px] font-medium transition",
-                  isDark
+        <div className="mt-6 space-y-2">
+          <NavLink
+            to="/settings"
+            className={({ isActive }) =>
+              cn(
+                "flex h-12 w-full items-center gap-4 rounded-full border px-4 text-[15px] font-medium transition duration-200",
+                isActive
+                  ? "border-primary bg-primary text-white shadow-[0_18px_40px_rgba(229,20,20,0.28)]"
+                  : isDark
                     ? "border-transparent text-slate-300/90 hover:bg-primary/10 hover:text-white"
                     : "border-transparent text-slate-600 hover:bg-primary/8 hover:text-primary",
-                )}
-              >
-                <LogOut className="h-4 w-4 shrink-0" />
-                Sair
-              </button>
-            ) : null}
-          </div>
+              )
+            }
+          >
+            <Settings className="h-4.5 w-4.5 shrink-0" />
+            <span>Configurações</span>
+          </NavLink>
+
+          <button
+            type="button"
+            onClick={onLogout}
+            className={cn(
+              "flex h-12 w-full items-center gap-4 rounded-full border px-4 text-[15px] font-medium transition duration-200",
+              isDark
+                ? "border-transparent text-slate-300/90 hover:bg-primary/10 hover:text-white"
+                : "border-transparent text-slate-600 hover:bg-primary/8 hover:text-primary",
+            )}
+          >
+            <LogOut className="h-4.5 w-4.5 shrink-0" />
+            <span>Sair</span>
+          </button>
         </div>
       </aside>
     </>
