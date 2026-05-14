@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Film, Plus, Trash2, X } from "lucide-react";
+import { Film, PencilLine, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { storyLogs, type StoryLog } from "../data/mockData";
 import { useTeamProfiles } from "../data/profiles";
@@ -20,12 +20,14 @@ import {
 import { useThemeMode } from "../theme";
 
 type StoryMediaType = "video" | "photo";
+type StoryStatus = "Agendado" | "Publicado" | "Rascunho";
 
 type StoryFormState = {
   date: string;
   time: string;
   quantity: string;
   mediaType: StoryMediaType;
+  status: StoryStatus;
   madeById: number;
   postedById: number;
   notes: string;
@@ -63,12 +65,26 @@ function formatLabel(type: StoryMediaType) {
   return type === "video" ? "Vídeo" : "Foto";
 }
 
+function formatStatusLabel(status: StoryStatus) {
+  return status;
+}
+
+function getStoryStatus(item: StoryLog): StoryStatus {
+  if (item.status) {
+    return item.status;
+  }
+
+  const storyDate = new Date(`${item.date}T${item.time}:00`);
+  return storyDate.getTime() > Date.now() ? "Agendado" : "Publicado";
+}
+
 function emptyForm(teamMembers: Array<{ id: number }>): StoryFormState {
   return {
     date: todayKey(),
     time: "09:00",
     quantity: "",
     mediaType: "video",
+    status: "Agendado",
     madeById: teamMembers[0]?.id ?? 1,
     postedById: teamMembers[1]?.id ?? teamMembers[0]?.id ?? 1,
     notes: "",
@@ -85,6 +101,7 @@ export function StoriesPage() {
   });
   const [teamScope] = useTeamScope();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [editingStoryId, setEditingStoryId] = useState<number | null>(null);
   const [form, setForm] = useState<StoryFormState>(() => emptyForm(teamMembers));
 
   const visibleItems = useMemo(
@@ -131,7 +148,29 @@ export function StoriesPage() {
 
   const closeModal = () => {
     setIsCreateOpen(false);
+    setEditingStoryId(null);
     setForm(emptyForm(teamMembers));
+  };
+
+  const openCreateModal = () => {
+    setEditingStoryId(null);
+    setForm(emptyForm(teamMembers));
+    setIsCreateOpen(true);
+  };
+
+  const openEditModal = (story: StoryLog) => {
+    setEditingStoryId(story.id);
+    setForm({
+      date: story.date,
+      time: story.time,
+      quantity: String(story.quantity),
+      mediaType: story.mediaType,
+      status: getStoryStatus(story),
+      madeById: story.madeById,
+      postedById: story.postedById,
+      notes: story.notes,
+    });
+    setIsCreateOpen(true);
   };
 
   const handleSave = () => {
@@ -151,18 +190,23 @@ export function StoriesPage() {
     }
 
     const nextItem: StoryLog = {
-      id: Math.max(...items.map((item) => item.id), 0) + 1,
+      id: editingStoryId ?? Math.max(...items.map((item) => item.id), 0) + 1,
       date: form.date,
       time: form.time,
       quantity,
       mediaType: form.mediaType,
+      status: form.status,
       madeById: madeBy.id,
       postedById: postedBy.id,
       notes: form.notes.trim(),
     };
 
-    setItems((previous) => [nextItem, ...previous]);
-    toast.success("Stories registrados.");
+    setItems((previous) =>
+      editingStoryId !== null
+        ? previous.map((item) => (item.id === editingStoryId ? nextItem : item))
+        : [nextItem, ...previous],
+    );
+    toast.success(editingStoryId !== null ? "Story atualizado." : "Stories registrados.");
     closeModal();
   };
 
@@ -191,7 +235,7 @@ export function StoriesPage() {
         title="Stories"
         description="Meta mensal: 168 stories, sendo 105 em vídeo. Registre o que foi feito por dia."
         actions={
-          <ActionButton onClick={() => setIsCreateOpen(true)}>
+          <ActionButton onClick={openCreateModal}>
             <Plus className="h-4 w-4" />
             Adicionar
           </ActionButton>
@@ -254,6 +298,8 @@ export function StoriesPage() {
                 const madeBy = teamMembers.find((member) => member.id === item.madeById);
                 const postedBy = teamMembers.find((member) => member.id === item.postedById);
 
+                const status = getStoryStatus(item);
+
                 return (
                   <div key={item.id} className={cardClass}>
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -261,6 +307,9 @@ export function StoriesPage() {
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
                             {formatLabel(item.mediaType)}
+                          </span>
+                          <span className="rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
+                            {formatStatusLabel(status)}
                           </span>
                           <span className="rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
                             {formatDate(item.date)} · {item.time}
@@ -271,14 +320,24 @@ export function StoriesPage() {
                         </div>
                         <p className="text-sm text-muted-foreground">{item.notes || "Sem observação"}</p>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(item.id)}
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/60 text-muted-foreground transition hover:bg-muted hover:text-foreground"
-                        aria-label="Remover registro"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => openEditModal(item)}
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/60 text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                          aria-label="Editar registro"
+                        >
+                          <PencilLine className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(item.id)}
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/60 text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                          aria-label="Remover registro"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     </div>
 
                     <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -290,7 +349,7 @@ export function StoriesPage() {
               }) : (
                 <EmptyState
                   title="Nenhum story registrado"
-                  description="Quando houver registros no Supabase, eles aparecem aqui de forma compartilhada."
+                  description="Clique em Adicionar para registrar o primeiro story. Quando houver registros no Supabase, eles aparecem aqui de forma compartilhada."
                 />
               )}
             </div>
@@ -347,8 +406,12 @@ export function StoriesPage() {
           >
             <div className="flex items-start justify-between gap-4 border-b border-border/60 p-5 sm:p-6">
               <div>
-                <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Novo registro</p>
-                <h3 className="mt-1 text-2xl font-semibold tracking-tight text-foreground">Adicionar stories do dia</h3>
+                <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                  {editingStoryId !== null ? "Editar registro" : "Novo registro"}
+                </p>
+                <h3 className="mt-1 text-2xl font-semibold tracking-tight text-foreground">
+                  {editingStoryId !== null ? "Editar stories do dia" : "Adicionar stories do dia"}
+                </h3>
               </div>
               <span className="rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
                 {stats.remainingTotal} faltam
@@ -401,6 +464,20 @@ export function StoriesPage() {
                   </label>
 
                   <label className="grid gap-2">
+                    <span className="text-sm font-medium text-foreground">Status</span>
+                    <RoundedDropdown
+                      label="Status"
+                      value={form.status}
+                      options={[
+                        { label: "Agendado", value: "Agendado" },
+                        { label: "Publicado", value: "Publicado" },
+                        { label: "Rascunho", value: "Rascunho" },
+                      ]}
+                      onChange={(value) => setForm((previous) => ({ ...previous, status: value }))}
+                    />
+                  </label>
+
+                  <label className="grid gap-2">
                     <span className="text-sm font-medium text-foreground">Quem fez</span>
                     <RoundedDropdown
                       label="Quem fez"
@@ -443,7 +520,7 @@ export function StoriesPage() {
                 <div className="mt-5 flex justify-end">
                   <ActionButton onClick={handleSave}>
                     <Plus className="h-4 w-4" />
-                    Adicionar
+                    {editingStoryId !== null ? "Salvar alterações" : "Adicionar"}
                   </ActionButton>
                 </div>
               </div>

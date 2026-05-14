@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
-import { ChevronDown, Image as ImageIcon, Link2, Lightbulb, Plus, Upload, Video, X } from "lucide-react";
+import { ChevronDown, Image as ImageIcon, Link2, Lightbulb, PencilLine, Plus, Upload, Video, X } from "lucide-react";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "motion/react";
-import { ideas } from "../data/mockData";
+import { ideas, type Idea, type IdeaStatus } from "../data/mockData";
 import { useTeamProfiles } from "../data/profiles";
 import { useSupabaseSyncedListState } from "../data/supabaseSync";
 import { matchesTeamScope, useTeamScope } from "../data/teamScope";
@@ -29,13 +29,17 @@ const ideaCategories = [
   "Feed",
 ] as const;
 
+const ideaStatuses: IdeaStatus[] = ["Ideia", "Em produção", "Pronto"];
+
 type IdeaCategory = (typeof ideaCategories)[number];
 type IdeaMediaSource = "url" | "upload";
 type IdeaMediaKind = "photo" | "video";
+type IdeaFilter = "all" | IdeaStatus;
 
 type IdeaFormState = {
   title: string;
   category: IdeaCategory;
+  status: IdeaStatus;
   theme: string;
   description: string;
   script: string;
@@ -147,12 +151,15 @@ export function IdeasPage() {
   const [teamScope] = useTeamScope();
   const [isSparkOpen, setIsSparkOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [editingIdeaId, setEditingIdeaId] = useState<number | null>(null);
+  const [ideaFilter, setIdeaFilter] = useState<IdeaFilter>("all");
   const [pendingDelete, setPendingDelete] = useState<{ ideaId: number; ideaTitle: string } | null>(null);
   const sparkTimerRef = useRef<number | null>(null);
   const mediaInputRef = useRef<HTMLInputElement | null>(null);
   const [form, setForm] = useState<IdeaFormState>({
     title: "",
     category: ideaCategories[0],
+    status: "Ideia",
     theme: "",
     description: "",
     script: "",
@@ -164,8 +171,13 @@ export function IdeasPage() {
   });
 
   const visibleItems = useMemo(
-    () => items.filter((idea) => matchesTeamScope(idea.responsibleId, teamScope)),
-    [items, teamScope],
+    () =>
+      items.filter((idea) => {
+        const matchesScope = matchesTeamScope(idea.responsibleId, teamScope);
+        const matchesStatus = ideaFilter === "all" || idea.status === ideaFilter;
+        return matchesScope && matchesStatus;
+      }),
+    [ideaFilter, items, teamScope],
   );
 
   useEffect(() => {
@@ -204,34 +216,12 @@ export function IdeasPage() {
     }, 950);
   };
 
-  const handleCreateIdea = () => {
-    if (!form.title.trim() || !form.category.trim() || !form.theme.trim() || !form.description.trim()) {
-      toast.error("Preencha título, categoria, tema e descrição.");
-      return;
-    }
-
-    setItems((previous) => [
-      {
-        id: Math.max(...previous.map((idea) => idea.id), 0) + 1,
-        title: form.title.trim(),
-        category: form.category,
-        theme: form.theme.trim(),
-        description: form.description.trim(),
-        status: "Ideia",
-        script: form.script.trim() || undefined,
-        responsibleId: form.responsibleId,
-        mediaSource: form.mediaSource,
-        mediaKind: form.mediaKind,
-        mediaUrl: form.mediaUrl.trim() || undefined,
-        mediaFileName: form.mediaFileName.trim() || undefined,
-      },
-      ...previous,
-    ]);
-
-    setIsCreateOpen(false);
+  const openCreateModal = () => {
+    setEditingIdeaId(null);
     setForm({
       title: "",
       category: ideaCategories[0],
+      status: "Ideia",
       theme: "",
       description: "",
       script: "",
@@ -241,7 +231,75 @@ export function IdeasPage() {
       mediaUrl: "",
       mediaFileName: "",
     });
-    toast.success("Ideia criada com sucesso.");
+    handleOpenIdeaCreate();
+  };
+
+  const openEditIdea = (idea: Idea) => {
+    setEditingIdeaId(idea.id);
+    setForm({
+      title: idea.title,
+      category: idea.category,
+      status: idea.status,
+      theme: idea.theme,
+      description: idea.description,
+      script: idea.script ?? "",
+      responsibleId: idea.responsibleId,
+      mediaSource: idea.mediaUrl ? "upload" : "url",
+      mediaKind: idea.mediaKind ?? (idea.mediaUrl && isVideoLike(idea.mediaUrl) ? "video" : "photo"),
+      mediaUrl: idea.mediaUrl ?? "",
+      mediaFileName: idea.mediaFileName ?? "",
+    });
+    setIsCreateOpen(true);
+  };
+
+  const closeIdeaModal = () => {
+    setIsCreateOpen(false);
+    setEditingIdeaId(null);
+  };
+
+  const handleSaveIdea = () => {
+    if (!form.title.trim() || !form.category.trim() || !form.theme.trim() || !form.description.trim()) {
+      toast.error("Preencha tÃ­tulo, categoria, tema e descriÃ§Ã£o.");
+      return;
+    }
+
+    const nextIdea: Idea = {
+      id: editingIdeaId ?? Math.max(...items.map((idea) => idea.id), 0) + 1,
+      title: form.title.trim(),
+      category: form.category,
+      theme: form.theme.trim(),
+      description: form.description.trim(),
+      status: form.status,
+      script: form.script.trim() || undefined,
+      responsibleId: form.responsibleId,
+      mediaSource: form.mediaSource,
+      mediaKind: form.mediaKind,
+      mediaUrl: form.mediaUrl.trim() || undefined,
+      mediaFileName: form.mediaFileName.trim() || undefined,
+    };
+
+    setItems((previous) =>
+      editingIdeaId !== null
+        ? previous.map((idea) => (idea.id === editingIdeaId ? nextIdea : idea))
+        : [nextIdea, ...previous],
+    );
+
+    const wasEditing = editingIdeaId !== null;
+    closeIdeaModal();
+    setForm({
+      title: "",
+      category: ideaCategories[0],
+      status: "Ideia",
+      theme: "",
+      description: "",
+      script: "",
+      responsibleId: teamMembers[0].id,
+      mediaSource: "url",
+      mediaKind: "photo",
+      mediaUrl: "",
+      mediaFileName: "",
+    });
+    toast.success(wasEditing ? "Ideia atualizada com sucesso." : "Ideia criada com sucesso.");
   };
 
   const handleMediaFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -304,12 +362,32 @@ export function IdeasPage() {
         title="Banco de ideias pronto para produção"
         description="Temas, roteiros e responsáveis ficam organizados para a operação girar com mais velocidade e menos retrabalho."
         actions={
-          <ActionButton onClick={handleOpenIdeaCreate}>
+          <ActionButton onClick={openCreateModal}>
             <Plus className="h-4 w-4" />
             Nova Ideia
           </ActionButton>
         }
       />
+
+      <div className="mb-4 flex flex-wrap gap-2">
+        {[
+          { label: "Todas", value: "all" as const },
+          ...ideaStatuses.map((status) => ({ label: status, value: status })),
+        ].map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => setIdeaFilter(option.value)}
+            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+              ideaFilter === option.value
+                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                : "border border-border/60 bg-background text-muted-foreground hover:border-primary/20 hover:text-foreground"
+            }`}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
         {visibleItems.length > 0 ? visibleItems.map((idea, index) => {
@@ -329,7 +407,15 @@ export function IdeasPage() {
                 boxShadow: `0 18px 36px ${member.color}10`,
               }}
             >
-              <div className="absolute right-4 top-4 z-10 opacity-0 transition group-hover:opacity-100">
+              <div className="absolute right-4 top-4 z-10 flex gap-2 opacity-0 transition group-hover:opacity-100">
+                <button
+                  type="button"
+                  onClick={() => openEditIdea(idea)}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/60 bg-background text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                  aria-label="Editar ideia"
+                >
+                  <PencilLine className="h-4 w-4" />
+                </button>
                 <DeleteIconButton onClick={() => setPendingDelete({ ideaId: idea.id, ideaTitle: idea.title })} />
               </div>
               <div className="flex items-start justify-between gap-4">
@@ -460,12 +546,14 @@ export function IdeasPage() {
           >
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Nova Ideia</p>
-                <h3 className="mt-2 text-2xl font-semibold tracking-tight text-foreground">Criar ideia rápida</h3>
+                <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{editingIdeaId !== null ? "Editar ideia" : "Nova Ideia"}</p>
+                <h3 className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
+                  {editingIdeaId !== null ? "Ajustar ideia existente" : "Criar ideia rápida"}
+                </h3>
               </div>
               <button
                 type="button"
-                onClick={() => setIsCreateOpen(false)}
+                onClick={closeIdeaModal}
                 className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground transition hover:bg-muted/80 hover:text-foreground"
               >
                 <X className="h-4 w-4" />
@@ -495,6 +583,15 @@ export function IdeasPage() {
                   value={form.category}
                   options={ideaCategories.map((category) => ({ label: category, value: category }))}
                   onChange={(value) => setForm((previous) => ({ ...previous, category: value }))}
+                />
+              </label>
+              <label className="grid gap-2">
+                <span className="text-sm font-medium text-foreground">Status</span>
+                <RoundedDropdown
+                  label="Status"
+                  value={form.status}
+                  options={ideaStatuses.map((status) => ({ label: status, value: status }))}
+                  onChange={(value) => setForm((previous) => ({ ...previous, status: value }))}
                 />
               </label>
               <label className="grid gap-2">
@@ -625,12 +722,12 @@ export function IdeasPage() {
               </div>
 
             <div className="mt-6 flex flex-wrap justify-end gap-3">
-              <ActionButton variant="secondary" onClick={() => setIsCreateOpen(false)}>
+              <ActionButton variant="secondary" onClick={closeIdeaModal}>
                 Cancelar
               </ActionButton>
-              <ActionButton onClick={handleCreateIdea}>
+              <ActionButton onClick={handleSaveIdea}>
                 <Plus className="h-4 w-4" />
-                Criar ideia
+                {editingIdeaId !== null ? "Salvar ideia" : "Criar ideia"}
               </ActionButton>
             </div>
           </div>

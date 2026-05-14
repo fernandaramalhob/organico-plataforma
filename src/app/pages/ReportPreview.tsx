@@ -355,6 +355,8 @@ function ManualBlockCard({
             type="button"
             onClick={onMoveUp}
             disabled={!canMoveUp}
+            aria-label="Mover bloco para cima"
+            title="Mover bloco para cima"
             className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border/60 bg-white text-muted-foreground transition disabled:cursor-not-allowed disabled:opacity-40 dark:bg-card"
           >
             <MoveUp className="h-4 w-4" />
@@ -363,6 +365,8 @@ function ManualBlockCard({
             type="button"
             onClick={onMoveDown}
             disabled={!canMoveDown}
+            aria-label="Mover bloco para baixo"
+            title="Mover bloco para baixo"
             className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border/60 bg-white text-muted-foreground transition disabled:cursor-not-allowed disabled:opacity-40 dark:bg-card"
           >
             <MoveDown className="h-4 w-4" />
@@ -370,6 +374,8 @@ function ManualBlockCard({
           <button
             type="button"
             onClick={onRemove}
+            aria-label="Apagar bloco"
+            title="Apagar bloco"
             className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-rose-200 bg-white text-rose-500 transition hover:bg-rose-50 dark:border-[#ff8da5]/20 dark:bg-[#1d171a] dark:text-[#ff8da5]"
           >
             <Trash2 className="h-4 w-4" />
@@ -921,8 +927,9 @@ export function ReportPreviewPage() {
       const swapped = [...pageBlocks];
       [swapped[currentIndex], swapped[nextIndex]] = [swapped[nextIndex], swapped[currentIndex]];
 
+      const reorderedPageBlocks = swapped.map((block, index) => ({ ...block, order: index }));
       const next = previous.map((block) => {
-        const match = swapped.find((item) => item.id === block.id);
+        const match = reorderedPageBlocks.find((item) => item.id === block.id);
         return match ? { ...block, order: match.order } : block;
       });
 
@@ -1212,6 +1219,9 @@ export function ReportPreviewPage() {
 
           <GlassPanel className="space-y-4 p-5">
             <SectionTitle title="Blocos da página" description={`Blocos em ${pageTitle}. Você pode mover, editar ou apagar.`} />
+            <p className="text-sm leading-6 text-muted-foreground">
+              Página é a folha do PDF, seção é o recorte visual dessa folha e bloco é cada item manual que você adiciona ou reorganiza.
+            </p>
             <div className="flex items-center justify-between rounded-2xl bg-muted/35 px-4 py-3 text-sm">
               <span>{pageLabels[reportState.selectedPage]}</span>
               <span className="text-muted-foreground">{blockCountForSelectedPage} bloco{blockCountForSelectedPage !== 1 ? "s" : ""}</span>

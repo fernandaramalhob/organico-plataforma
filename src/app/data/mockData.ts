@@ -148,6 +148,7 @@ export type StoryLog = {
   mediaType: "video" | "photo";
   madeById: number;
   postedById: number;
+  status?: "Agendado" | "Publicado" | "Rascunho";
   notes: string;
 };
 
@@ -306,7 +307,61 @@ export const dashboardMetrics: DashboardMetric[] = [
   { id: "growth", label: "Crescimento", value: "0", change: 0, highlight: "Sem dados cadastrados." },
 ];
 
-export const posts: Post[] = [];
+export const posts: Post[] = [
+  {
+    id: 1,
+    title: "Reels de bastidores da campanha",
+    description:
+      "Abertura com bastidores da equipe, prova social logo no inicio e CTA curto para puxar conversa.",
+    type: "Reels",
+    authorId: 1,
+    engagement: 4800,
+    reach: 54000,
+    date: "2026-04-28",
+    thumbnail:
+      "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 600'><rect width='800' height='600' fill='%23f4f7fb'/><rect x='48' y='48' width='704' height='504' rx='32' fill='%23ffffff'/><text x='64' y='150' font-family='Arial, sans-serif' font-size='40' font-weight='700' fill='%231f2937'>Reels de bastidores</text><text x='64' y='205' font-family='Arial, sans-serif' font-size='24' fill='%236b7280'>Campanha Great Organico</text><circle cx='680' cy='150' r='64' fill='%23833AB4' fill-opacity='0.14'/><circle cx='680' cy='150' r='38' fill='%23E1306C' fill-opacity='0.2'/><rect x='64' y='268' width='360' height='18' rx='9' fill='%23d1d5db'/><rect x='64' y='304' width='320' height='18' rx='9' fill='%23d1d5db'/><rect x='64' y='340' width='280' height='18' rx='9' fill='%23d1d5db'/><rect x='64' y='412' width='180' height='56' rx='18' fill='%23833AB4'/><text x='154' y='449' font-family='Arial, sans-serif' font-size='22' font-weight='700' text-anchor='middle' fill='%23ffffff'>Abrir post</text></svg>",
+    status: "Publicado",
+    metrics: {
+      likes: 3250,
+      comments: 190,
+      saves: 240,
+      shares: 78,
+    },
+    checklist: [
+      { id: "post-1-1", label: "Revisar gancho inicial", done: true },
+      { id: "post-1-2", label: "Checar legenda e CTA", done: true },
+      { id: "post-1-3", label: "Validar capa e preview", done: true },
+    ],
+    comments: [
+      {
+        id: "post-1-c1",
+        authorId: 2,
+        time: "09:20",
+        text: "A leitura ficou rapida e o gancho segurou bem os primeiros segundos.",
+      },
+      {
+        id: "post-1-c2",
+        authorId: 3,
+        time: "10:05",
+        text: "Aprovado para manter no mesmo padrao visual dos proximos reels.",
+      },
+    ],
+    files: [
+      { id: "post-1-f1", name: "roteiro-reels.pdf", size: "1,2 MB", kind: "pdf" },
+      { id: "post-1-f2", name: "capas-final.png", size: "820 KB", kind: "image" },
+    ],
+    script: {
+      hook: "Mostrar bastidores logo no primeiro segundo e prometer o resultado antes da apresentacao.",
+      development: "Alternar cortes curtos com cenas do time e inserir a prova social no meio do video.",
+      solution: "Fechar com o resultado da campanha e reforcar o beneficio para a audiencia certa.",
+      cta: "Convidar a pessoa a ver mais detalhes no perfil e acompanhar o proximo post.",
+    },
+    approval: {
+      approvedBy: "Brenda",
+      date: "2026-04-28 11:40",
+    },
+  },
+];
 export const topPosts = posts.slice(0, 5);
 export const worstPosts = posts.slice(5, 7);
 

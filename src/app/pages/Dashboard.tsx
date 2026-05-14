@@ -109,6 +109,8 @@ function DashboardMetricCard({
   value,
   change,
   detail,
+  to,
+  destinationLabel,
   darkMode = false,
 }: {
   icon: LucideIcon;
@@ -116,6 +118,8 @@ function DashboardMetricCard({
   value: string;
   change: number;
   detail: string;
+  to: string;
+  destinationLabel: string;
   darkMode?: boolean;
 }) {
   const positive = change >= 0;
@@ -131,10 +135,12 @@ function DashboardMetricCard({
       };
 
   return (
-    <GlassPanel
-      className="overflow-hidden"
-      style={shellStyle}
+    <Link
+      to={to}
+      aria-label={`${label}. ${destinationLabel}`}
+      className="group block outline-none transition focus-visible:scale-[1.01]"
     >
+      <GlassPanel className="overflow-hidden transition group-hover:-translate-y-1 group-hover:shadow-[0_24px_56px_rgba(15,23,42,0.12)] group-focus-visible:ring-2 group-focus-visible:ring-primary/40" style={shellStyle}>
       <div className="flex items-start justify-between gap-4">
         <div
           className="inline-flex h-12 w-12 items-center justify-center rounded-2xl text-[#8A2FB1] ring-1 ring-[#833AB4]/10"
@@ -180,7 +186,12 @@ function DashboardMetricCard({
           style={{ width: `${Math.min(Math.abs(change) * 6, 100)}%` }}
         />
       </div>
-    </GlassPanel>
+      <div className="mt-4 flex items-center justify-between text-xs font-medium text-muted-foreground">
+        <span>{destinationLabel}</span>
+        <span className="text-primary transition group-hover:translate-x-0.5">Abrir</span>
+      </div>
+      </GlassPanel>
+    </Link>
   );
 }
 
@@ -277,6 +288,8 @@ export function DashboardPage() {
       value: formatLongNumber(totalReach),
       change: 0,
       highlight: visiblePosts.length > 0 ? "Dados vindos do Supabase." : "Nenhum post encontrado no recorte.",
+      to: "/meta-insights",
+      destinationLabel: "Ver insights de alcance",
     },
     {
       id: "engagement",
@@ -284,6 +297,8 @@ export function DashboardPage() {
       value: formatLongNumber(totalEngagement),
       change: 0,
       highlight: visiblePosts.length > 0 ? "Soma de interações dos posts filtrados." : "Nenhum post encontrado no recorte.",
+      to: "/meta-insights",
+      destinationLabel: "Ver insights de engajamento",
     },
     {
       id: "posts",
@@ -291,6 +306,8 @@ export function DashboardPage() {
       value: String(visiblePosts.length),
       change: 0,
       highlight: visiblePosts.length > 0 ? "Quantidade total de conteúdos visíveis." : "Nenhum post encontrado no recorte.",
+      to: "/reports",
+      destinationLabel: "Ver relatórios de conteúdo",
     },
     {
       id: "goals",
@@ -298,6 +315,8 @@ export function DashboardPage() {
       value: `${completedGoals}/${visibleGoals.length}`,
       change: 0,
       highlight: visibleGoals.length > 0 ? "Metas concluídas dentro do recorte selecionado." : "Nenhuma meta encontrada no recorte.",
+      to: "/goals",
+      destinationLabel: "Abrir metas",
     },
     {
       id: "calendar",
@@ -307,6 +326,8 @@ export function DashboardPage() {
       highlight: visibleCalendarEvents.length > 0
         ? "Tarefas do calendário finalizadas com checklist completo."
         : "Nenhuma tarefa de calendário encontrada no recorte.",
+      to: "/calendar",
+      destinationLabel: "Abrir calendário",
     },
     {
       id: "checklist",
@@ -316,6 +337,8 @@ export function DashboardPage() {
       highlight: calendarChecklistTotals.items > 0
         ? "Itens marcados no calendário alimentam este número."
         : "Nenhum item de checklist encontrado no recorte.",
+      to: "/checklist",
+      destinationLabel: "Ver checklist",
     },
   ] as const;
   const evolutionBuckets = visiblePosts.reduce<Map<string, { date: string; reach: number; engagement: number }>>(
@@ -342,32 +365,41 @@ export function DashboardPage() {
         />
 
         <div className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
-          <GlassPanel
-            className="flex flex-col items-center justify-center overflow-hidden p-6 text-white shadow-[0_28px_60px_rgba(131,58,180,0.18)]"
-            index={1}
-            style={{
-              background: isDark
-                ? "linear-gradient(145deg, rgba(131,58,180,0.95) 0%, rgba(225,48,108,0.92) 52%, rgba(245,96,64,0.9) 100%)"
-                : "linear-gradient(145deg, #833AB4 0%, #E1306C 52%, #F56040 100%)",
-              borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.10)",
-            }}
+          <Link
+            to="/meta-insights"
+            aria-label="Abrir Meta Insights com a saúde do perfil"
+            className="group block outline-none transition focus-visible:scale-[1.01]"
           >
-            <InstagramHealthScoreRing score={dashboardSummary.healthScore} />
-            <div className="mt-5 grid w-full gap-3 sm:grid-cols-2 xl:grid-cols-1">
-              <div className="rounded-2xl bg-white/12 p-4 text-center backdrop-blur dark:bg-white/7">
-                <p className="text-xs uppercase tracking-[0.16em] text-white/72">Metas concluídas</p>
-                <p className="mt-2 text-2xl font-semibold text-white">
-                  {dashboardSummary.completedGoals}/{visibleGoals.length}
-                </p>
+            <GlassPanel
+              className="flex flex-col items-center justify-center overflow-hidden p-6 text-white shadow-[0_28px_60px_rgba(131,58,180,0.18)] transition group-hover:-translate-y-1 group-hover:shadow-[0_34px_70px_rgba(131,58,180,0.24)] group-focus-visible:ring-2 group-focus-visible:ring-primary/40"
+              index={1}
+              style={{
+                background: isDark
+                  ? "linear-gradient(145deg, rgba(131,58,180,0.95) 0%, rgba(225,48,108,0.92) 52%, rgba(245,96,64,0.9) 100%)"
+                  : "linear-gradient(145deg, #833AB4 0%, #E1306C 52%, #F56040 100%)",
+                borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.10)",
+              }}
+            >
+              <InstagramHealthScoreRing score={dashboardSummary.healthScore} />
+              <div className="mt-5 grid w-full gap-3 sm:grid-cols-2 xl:grid-cols-1">
+                <div className="rounded-2xl bg-white/12 p-4 text-center backdrop-blur dark:bg-white/7">
+                  <p className="text-xs uppercase tracking-[0.16em] text-white/72">Metas concluídas</p>
+                  <p className="mt-2 text-2xl font-semibold text-white">
+                    {dashboardSummary.completedGoals}/{visibleGoals.length}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-white/12 p-4 text-center backdrop-blur dark:bg-white/7">
+                  <p className="text-xs uppercase tracking-[0.16em] text-white/72">Engajamento total</p>
+                  <p className="mt-2 text-2xl font-semibold text-white">
+                    {formatLongNumber(dashboardSummary.totalEngagement)}
+                  </p>
+                </div>
               </div>
-              <div className="rounded-2xl bg-white/12 p-4 text-center backdrop-blur dark:bg-white/7">
-                <p className="text-xs uppercase tracking-[0.16em] text-white/72">Engajamento total</p>
-                <p className="mt-2 text-2xl font-semibold text-white">
-                  {formatLongNumber(dashboardSummary.totalEngagement)}
-                </p>
+              <div className="mt-5 inline-flex items-center rounded-full bg-white/12 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-white/85 transition group-hover:bg-white/18">
+                Abrir Meta Insights
               </div>
-            </div>
-          </GlassPanel>
+            </GlassPanel>
+          </Link>
 
           <div className="grid gap-6 md:grid-cols-2">
             {dashboardMetrics.map((metric, index) => {
@@ -381,6 +413,8 @@ export function DashboardPage() {
                   value={metric.value}
                   change={metric.change}
                   detail={metric.highlight}
+                  to={metric.to}
+                  destinationLabel={metric.destinationLabel}
                   darkMode={isDark}
                 />
               );

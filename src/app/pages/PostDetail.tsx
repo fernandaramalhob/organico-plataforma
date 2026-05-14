@@ -44,10 +44,18 @@ export function PostDetailPage() {
   if (!post) {
     return (
       <PageTransition>
-        <EmptyState
-          title="Post não encontrado"
-          description="O item solicitado ainda não existe na tabela `posts` do Supabase."
-        />
+        <div className="space-y-4">
+          <EmptyState
+            title="Post não encontrado"
+            description="O item solicitado ainda não existe na tabela `posts` do Supabase."
+          />
+          <div className="flex justify-center">
+            <ActionButton variant="secondary" onClick={() => navigate(-1)}>
+              <ArrowLeft className="h-4 w-4" />
+              Voltar
+            </ActionButton>
+          </div>
+        </div>
       </PageTransition>
     );
   }

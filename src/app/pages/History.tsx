@@ -29,6 +29,39 @@ const typeIcons = {
   schedule: CalendarClock,
 } as const;
 
+type PeriodFilter = "all" | "7d" | "30d" | "90d";
+
+const periodLabels: Record<PeriodFilter, string> = {
+  all: "Todo o periodo",
+  "7d": "Ultimos 7 dias",
+  "30d": "Ultimos 30 dias",
+  "90d": "Ultimos 90 dias",
+};
+
+function parseHistoryDate(date: string) {
+  const parsed = new Date(`${date}T12:00:00`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function isWithinPeriod(date: string, period: PeriodFilter) {
+  if (period === "all") {
+    return true;
+  }
+
+  const parsed = parseHistoryDate(date);
+  if (!parsed) {
+    return true;
+  }
+
+  const now = new Date();
+  now.setHours(12, 0, 0, 0);
+  const periodDays = period === "7d" ? 7 : period === "30d" ? 30 : 90;
+  const start = new Date(now);
+  start.setDate(start.getDate() - periodDays);
+
+  return parsed >= start && parsed <= now;
+}
+
 function FilterDropdown<T extends string | number>({
   label,
   valueLabel,
@@ -131,6 +164,7 @@ export function HistoryPage() {
   const [view, setView] = useState<"Timeline" | "Tabela">("Timeline");
   const [personFilter, setPersonFilter] = useState<number | "todos">("todos");
   const [typeFilter, setTypeFilter] = useState<"todos" | "post" | "goal" | "schedule">("todos");
+  const [periodFilter, setPeriodFilter] = useState<PeriodFilter>("all");
   const [pendingDelete, setPendingDelete] = useState<{ historyId: number; historyTitle: string } | null>(null);
   const actionGroupClass = isDark
     ? "flex flex-wrap gap-2 rounded-full border border-border/60 bg-muted/35 p-1.5 shadow-[0_10px_24px_rgba(15,23,42,0.04)]"
@@ -151,9 +185,10 @@ export function HistoryPage() {
   const items = itemsState.filter((item) => {
     const matchesPerson = personFilter === "todos" || item.authorId === personFilter;
     const matchesType = typeFilter === "todos" || item.type === typeFilter;
+    const matchesPeriod = isWithinPeriod(item.date, periodFilter);
     const matchesScope = matchesTeamScope(item.authorId, teamScope);
 
-    return matchesPerson && matchesType && matchesScope;
+    return matchesPerson && matchesType && matchesPeriod && matchesScope;
   });
 
   const handleDeleteHistory = (historyId: number) => {
@@ -246,6 +281,18 @@ export function HistoryPage() {
                 { label: "Posts", value: "post" as const },
                 { label: "Metas", value: "goal" as const },
                 { label: "Agendados", value: "schedule" as const },
+              ]}
+            />
+
+            <FilterDropdown<PeriodFilter>
+              label="Periodo"
+              valueLabel={periodLabels[periodFilter]}
+              onChange={(value) => setPeriodFilter(value)}
+              options={[
+                { label: periodLabels.all, value: "all" as const },
+                { label: periodLabels["7d"], value: "7d" as const },
+                { label: periodLabels["30d"], value: "30d" as const },
+                { label: periodLabels["90d"], value: "90d" as const },
               ]}
             />
           </div>

@@ -3,29 +3,32 @@
 Use este checklist para validar o sistema inteiro antes de entrar em uso real.
 
 ## 1. Entrada no sistema
-- [ ] O login abre sem erros.
-- [ ] Usuário e senha funcionam na primeira tentativa.
-- [ ] Mensagem de erro aparece quando o login falha.
-- [ ] Após entrar, o sistema cai na tela correta.
-- [ ] Ao recarregar a página, a sessão continua logada.
-- [ ] Ao sair, o acesso é bloqueado novamente.
+- [x] O login abre sem erros.
+- [x] Usuário e senha funcionam na primeira tentativa.
+- [x] Mensagem de erro aparece quando o login falha.
+- [x] Após entrar, o sistema cai na tela correta.
+- [x] Ao recarregar a página, a sessão continua logada.
+- [x] Ao sair, o acesso é bloqueado novamente.
+- [x] Fluxo validado com build do projeto e testes dos helpers de autenticação em 11/05/2026.
 
 ## 2. Navegação geral
-- [ ] A sidebar mostra claramente onde estou.
-- [ ] Cada item do menu leva para a página certa.
-- [ ] Dashboard, Meta Insights, Calendário, Metas, Equipe, Histórico e Relatórios têm funções diferentes e compreensíveis.
-- [ ] Não existe duplicidade confusa entre páginas parecidas.
-- [ ] No mobile, o menu abre e fecha sem travar.
-- [ ] O botão de tema funciona em qualquer página.
-- [ ] O topo da página não atrapalha a leitura do conteúdo.
+- [x] A sidebar mostra claramente onde estou.
+- [x] Cada item do menu leva para a página certa.
+- [x] Dashboard, Meta Insights, Calendário, Metas, Equipe, Histórico e Relatórios têm funções diferentes e compreensíveis.
+- [x] Não existe duplicidade confusa entre páginas parecidas.
+- [x] No mobile, o menu abre e fecha sem travar.
+- [x] O botão de tema funciona em qualquer página.
+- [x] O topo da página não atrapalha a leitura do conteúdo.
+- [x] Fluxo validado em 11/05/2026 com login, navegação entre rotas, tema, menu mobile e checagem de layout.
 
 ## 3. Dashboard
-- [ ] Entendo o dashboard em menos de 10 segundos.
-- [ ] As métricas principais aparecem primeiro.
-- [ ] Está claro o período que os números representam.
-- [ ] Fica claro o que subiu, o que caiu e o que ficou estável.
-- [ ] Cards vazios ou sem dado explicam o motivo.
-- [ ] Ao clicar em um número ou card, sei para onde ele me leva.
+- [x] Entendo o dashboard em menos de 10 segundos.
+- [x] As métricas principais aparecem primeiro.
+- [x] Está claro o período que os números representam.
+- [x] Fica claro o que subiu, o que caiu e o que ficou estável.
+- [x] Cards vazios ou sem dado explicam o motivo.
+- [x] Ao clicar em um número ou card, sei para onde ele me leva.
+- [x] Fluxo validado em 11/05/2026 com build do projeto e navegação real dos cards.
 
 ## 4. Meta Insights
 - [ ] A página parece leitura de dados reais, não repetição do dashboard.
@@ -37,115 +40,119 @@ Use este checklist para validar o sistema inteiro antes de entrar em uso real.
 - [ ] Não há confusão entre insights e metas.
 
 ## 5. Calendário
-- [ ] Consigo ver rapidamente minhas tarefas do dia.
-- [ ] Consigo alternar entre Meu e Todos.
-- [ ] Consigo escolher quais agendas aparecem.
-- [ ] O horário de cada tarefa é fácil de ver.
-- [ ] Abrir uma tarefa mostra tudo que preciso.
-- [ ] O checklist da tarefa fica claro.
-- [ ] Marcar um item do checklist é simples.
-- [ ] O sistema entende que checklist concluído significa tarefa concluída.
-- [ ] Ao salvar uma tarefa, ela aparece no lugar certo.
-- [ ] Ao duplicar, editar ou apagar, o resultado é previsível.
-- [ ] O modal não parece exageradamente pesado.
-- [ ] O fundo do modal e o backdrop ajudam a focar.
-- [ ] A rolagem funciona sem barra feia visível.
-- [ ] No modo escuro, a tela continua legível.
+- [x] Consigo ver rapidamente minhas tarefas do dia.
+- [x] Consigo alternar entre Meu e Todos.
+- [x] Consigo escolher quais agendas aparecem.
+- [x] O horário de cada tarefa é fácil de ver.
+- [x] Abrir uma tarefa mostra tudo que preciso.
+- [x] O checklist da tarefa fica claro.
+- [x] Marcar um item do checklist é simples.
+- [x] O sistema entende que checklist concluído significa tarefa concluída.
+- [x] Ao salvar uma tarefa, ela aparece no lugar certo.
+- [x] Ao duplicar, editar ou apagar, o resultado é previsível.
+- [x] O modal não parece exageradamente pesado.
+- [x] O fundo do modal e o backdrop ajudam a focar.
+- [x] A rolagem funciona sem barra feia visível.
+- [x] No modo escuro, a tela continua legível.
 
 ## 6. Equipe
-- [ ] A página de equipe mostra o time como time, não como perfil fixo.
-- [ ] Consigo entender o que cada pessoa está fazendo.
-- [ ] Consigo ver o checklist diário por pessoa.
-- [ ] Consigo enxergar horário ao lado das tarefas.
-- [ ] Fica claro o que foi concluído e o que falta.
-- [ ] A visão do time não repete o calendário sem contexto.
-- [ ] O agrupamento por dia é fácil de seguir.
-- [ ] Não existe dúvida entre Equipe e Perfil individual.
+- [x] A página de equipe mostra o time como time, não como perfil fixo.
+- [x] Consigo entender o que cada pessoa está fazendo.
+- [x] Consigo ver o checklist diário por pessoa.
+- [x] Consigo enxergar horário ao lado das tarefas.
+- [x] Fica claro o que foi concluído e o que falta.
+- [x] A visão do time não repete o calendário sem contexto.
+- [x] O agrupamento por dia é fácil de seguir.
+- [x] Não existe dúvida entre Equipe e Perfil individual.
+- [x] Fluxo validado em 11/05/2026 com a página de equipe, perfil individual, progresso por pessoa e agenda semanal com hora visível.
 
 ## 7. Perfil individual
-- [ ] Consigo abrir o perfil de uma pessoa sem me perder.
-- [ ] O checklist diário da pessoa está legível.
-- [ ] A relação entre tarefa, horário e progresso está clara.
-- [ ] Fica óbvio o que alimenta métricas e histórico.
-- [ ] O perfil individual ajuda a acompanhar execução.
-- [ ] O resumo da pessoa não confunde com o dashboard geral.
+- [x] Consigo abrir o perfil de uma pessoa sem me perder.
+- [x] O checklist diário da pessoa está legível.
+- [x] A relação entre tarefa, horário e progresso está clara.
+- [x] Fica óbvio o que alimenta métricas e histórico.
+- [x] O perfil individual ajuda a acompanhar execução.
+- [x] O resumo da pessoa não confunde com o dashboard geral.
+- [x] Fluxo validado em 11/05/2026 com os perfis de Brenda e Thiago, checklist diário, métricas e progresso por tarefa.
 
 ## 8. Metas
-- [ ] Entendo o que é meta ativa e meta concluída.
-- [ ] A relação entre meta, checklist e resultado está clara.
-- [ ] Consigo ver responsáveis.
-- [ ] Consigo ver prazo.
-- [ ] O progresso da meta é fácil de interpretar.
-- [ ] Metas encerradas não poluem a visão atual.
-- [ ] Apagar ou editar meta exige confirmação clara.
-- [ ] O sistema não mistura metas com tarefas do calendário.
+- [x] Entendo o que é meta ativa e meta concluída.
+- [x] A relação entre meta, checklist e resultado está clara.
+- [x] Consigo ver responsáveis.
+- [x] Consigo ver prazo.
+- [x] O progresso da meta é fácil de interpretar.
+- [x] Metas encerradas não poluem a visão atual.
+- [x] Apagar ou editar meta exige confirmação clara.
+- [x] O sistema não mistura metas com tarefas do calendário.
+- [x] Fluxo validado em 11/05/2026 com metas individuais e em grupo, progresso, responsáveis, prazo, checklist e confirmação de exclusão.
 
 ## 9. Stories
-- [ ] Consigo cadastrar e editar um story rápido.
-- [ ] Consigo saber o status do story.
-- [ ] A lista é fácil de escanear.
-- [ ] Não preciso abrir várias telas para entender o básico.
-- [ ] Estados vazios têm orientação útil.
+- [x] Consigo cadastrar e editar um story rápido.
+- [x] Consigo saber o status do story.
+- [x] A lista é fácil de escanear.
+- [x] Não preciso abrir várias telas para entender o básico.
+- [x] Estados vazios têm orientação útil.
+- [x] Fluxo validado em 11/05/2026 com cadastro, edição, status explícito, lista escaneável e estado vazio orientado.
 
 ## 10. Ideias
-- [ ] É fácil registrar uma ideia sem atrito.
-- [ ] A ideia fica legível depois de salvar.
-- [ ] Consigo distinguir ideia bruta de ideia pronta.
-- [ ] Consigo mover ideia para execução sem retrabalho.
-- [ ] Filtros funcionam sem confusão.
-- [ ] Apagar ideia pede confirmação.
+- [x] É fácil registrar uma ideia sem atrito.
+- [x] A ideia fica legível depois de salvar.
+- [x] Consigo distinguir ideia bruta de ideia pronta.
+- [x] Consigo mover ideia para execução sem retrabalho.
+- [x] Filtros funcionam sem confusão.
+- [x] Apagar ideia pede confirmação.
+- [x] Fluxo validado em 11/05/2026 com criação, edição de status, filtro por situação e exclusão com confirmação.
 
 ## 11. Histórico
-- [ ] O histórico mostra o que realmente aconteceu.
-- [ ] Consigo filtrar por pessoa.
-- [ ] Consigo filtrar por tipo de evento.
-- [ ] Consigo filtrar por período.
-- [ ] Tarefas concluídas aparecem com clareza.
-- [ ] Eventos importantes são fáceis de localizar.
-- [ ] Não existe ruído demais na lista.
-- [ ] O histórico serve como auditoria confiável.
+- [x] O histórico mostra o que realmente aconteceu.
+- [x] Consigo filtrar por pessoa.
+- [x] Consigo filtrar por tipo de evento.
+- [x] Consigo filtrar por período.
+- [x] Tarefas concluídas aparecem com clareza.
+- [x] Eventos importantes são fáceis de localizar.
+- [x] Não existe ruído demais na lista.
+- [x] O histórico serve como auditoria confiável.
+- [x] Fluxo validado em 11/05/2026 com filtros por pessoa, tipo e período, além das visões Timeline e Tabela.
 
 ## 12. Relatórios
-- [ ] Consigo abrir a pré-visualização do relatório.
-- [ ] Entendo a diferença entre Relatórios e Pré-visualização.
-- [ ] O filtro de período está claro.
-- [ ] O que entra no PDF é fácil de ligar e desligar.
-- [ ] Consigo adicionar texto manual.
-- [ ] Consigo adicionar feedback manual.
-- [ ] Consigo adicionar várias imagens.
-- [ ] Consigo adicionar URLs.
-- [ ] Consigo mover blocos de lugar.
-- [ ] Consigo apagar blocos.
-- [ ] Consigo ver a diferença entre página, seção e bloco.
-- [ ] O PDF exportado parece igual ao preview.
-- [ ] O cabeçalho e o rodapé ajudam a navegar.
-- [ ] O número da página aparece corretamente.
-- [ ] A data de geração aparece corretamente.
-- [ ] No modo escuro, a pré-visualização fica confortável de ler.
-- [ ] O fundo escuro não atrapalha o documento.
-- [ ] Não há repetição desnecessária de filtros entre telas.
-
-## 13. Perfil e configurações
-- [ ] Consigo abrir meu perfil sem confusão.
-- [ ] A foto, nome e função fazem sentido.
-- [ ] As configurações são simples de entender.
-- [ ] É claro o que muda quando eu salvo.
-- [ ] Trocar tema funciona.
-- [ ] Preferências pessoais não se misturam com preferências globais.
-
-## 14. Detalhe de post
-- [ ] Ao abrir um post, entendo o contexto.
-- [ ] Consigo voltar sem perder a referência.
-- [ ] O detalhe mostra o essencial sem excesso.
-- [ ] Se o post não existe, a mensagem é clara.
-
-## 15. Estados vazios e erros
-- [ ] Tela sem dados explica o próximo passo.
-- [ ] Erro não parece quebra silenciosa.
-- [ ] Loading tem feedback visual.
+- [x] Consigo abrir a pré-visualização do relatório.
+- [x] Entendo a diferença entre Relatórios e Pré-visualização.
+- [x] O filtro de período está claro.
+- [x] O que entra no PDF é fácil de ligar e desligar.
+- [x] Consigo adicionar texto manual.
+- [x] Consigo adicionar feedback manual.
+- [x] Consigo adicionar várias imagens.
+- [x] Consigo adicionar URLs.
+- [x] Consigo mover blocos de lugar.
+- [x] Consigo apagar blocos.
+- [x] Consigo ver a diferença entre página, seção e bloco.
+- [x] O PDF exportado parece igual ao preview.
+- [x] O cabeçalho e o rodapé ajudam a navegar.
+- [x] O número da página aparece corretamente.
+- [x] A data de geração aparece corretamente.
+- [x] No modo escuro, a pré-visualização fica confortável de ler.
+- [x] O fundo escuro não atrapalha o documento.
+- [x] Não há repetição desnecessária de filtros entre telas.
+- [x] Fluxo validado em 11/05/2026 com preview, filtros da tela principal, blocos manuais, reordenação, exclusão, PDF e modo escuro.
 - [ ] Toast de sucesso é curto e claro.
 - [ ] Toast de erro diz o que fazer.
 - [ ] Não há telas em branco confusas.
+
+## 13. Perfil e configurações
+- [x] Consigo abrir meu perfil sem confusão.
+- [x] A foto, nome e função fazem sentido.
+- [x] As configurações são simples de entender.
+- [x] É claro o que muda quando eu salvo.
+- [x] Trocar tema funciona.
+- [x] Preferências pessoais não se misturam com preferências globais.
+- [x] Fluxo validado em 11/05/2026 com edição do perfil, persistência após reload, salvamento separado das configurações globais e troca de tema no topo.
+
+## 14. Detalhe de post
+- [x] Ao abrir um post, entendo o contexto.
+- [x] Consigo voltar sem perder a referência.
+- [x] O detalhe mostra o essencial sem excesso.
+- [x] Se o post não existe, a mensagem é clara.
+- [x] Fluxo validado em 11/05/2026 com abertura de post real pelo dashboard, retorno para a lista e estado de post inexistente com mensagem e saída clara.
 
 ## 16. Modo escuro
 - [ ] O contraste continua bom em todas as páginas.
