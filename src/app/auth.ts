@@ -103,18 +103,7 @@ export async function signInOrBootstrapDemoAccount(email: string, password: stri
     });
 
     if (bootstrapError) {
-      const { data: signUpData, error: signUpError } = await client.auth.signUp({
-        email: email.trim(),
-        password,
-      });
-
-      if (signUpError) {
-        throw bootstrapError ?? signUpError;
-      }
-
-      if (signUpData.session) {
-        return signUpData.session;
-      }
+      throw bootstrapError;
     }
 
     const retry = await client.auth.signInWithPassword({
