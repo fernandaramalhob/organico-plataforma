@@ -20,7 +20,6 @@ import { useThemeMode } from "../theme";
 
 const navigation = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/meta-insights", label: "Meta Insights", icon: Target },
   { to: "/calendar", label: "Calendário", icon: Calendar },
   { to: "/goals", label: "Metas", icon: CheckCircle2 },
   { to: "/stories", label: "Stories", icon: Camera },
@@ -28,6 +27,7 @@ const navigation = [
   { to: "/team", label: "Equipe", icon: Users },
   { to: "/history", label: "Histórico", icon: History },
   { to: "/reports", label: "Relatórios", icon: FileText },
+  { to: "/meta-insights", label: "Meta Insights", icon: Target },
 ];
 
 export function Sidebar({ onLogout }: { onLogout?: () => void }) {
@@ -45,7 +45,7 @@ export function Sidebar({ onLogout }: { onLogout?: () => void }) {
         type="button"
         onClick={() => setOpen(true)}
         className={cn(
-          "fixed left-4 top-4 z-40 inline-flex h-11 w-11 items-center justify-center rounded-2xl backdrop-blur-xl xl:hidden",
+          "fixed left-4 top-4 z-50 inline-flex h-11 w-11 items-center justify-center rounded-2xl backdrop-blur-xl xl:hidden",
           isDark
             ? "border border-white/8 bg-white/5 text-foreground shadow-[0_10px_30px_rgba(0,0,0,0.18)]"
             : "border border-black/5 bg-white text-foreground shadow-[0_12px_32px_rgba(15,23,42,0.08)]",

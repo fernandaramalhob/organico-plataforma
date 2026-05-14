@@ -23,7 +23,7 @@ const tabs = ["Checklist", "Comentários", "Arquivos", "Roteiro", "Aprovação"]
 export function PostDetailPage() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const [posts, , hydrated] = usePosts();
+  const [posts] = usePosts();
   const post = useMemo(() => posts.find((item) => String(item.id) === id) ?? null, [id, posts]);
   const [teamMembers] = useTeamProfiles();
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>("Checklist");
@@ -32,14 +32,6 @@ export function PostDetailPage() {
   useEffect(() => {
     setChecklist(post?.checklist ?? []);
   }, [post]);
-
-  if (!hydrated) {
-    return (
-      <PageTransition>
-        <EmptyState title="Carregando post" description="Estamos buscando os dados no Supabase." />
-      </PageTransition>
-    );
-  }
 
   if (!post) {
     return (
