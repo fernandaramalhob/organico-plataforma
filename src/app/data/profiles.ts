@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuthSession } from "../auth";
-import { isSupabaseConfigured, supabase } from "./supabase";
+import { readLocalJson, subscribeLocalKey, writeLocalJson } from "./localStore";
 import { teamMembers as baseTeamMembers, type TeamMember } from "./mockData";
 
 export type EditableTeamMember = TeamMember & {
@@ -11,32 +11,7 @@ export type EditableTeamMember = TeamMember & {
   bio: string;
 };
 
-type TeamProfileRow = Partial<EditableTeamMember> & {
-  id?: number | string | null;
-  user_id?: string | null;
-  avatar_url?: string | null;
-  monthly_posts?: EditableTeamMember["monthlyPosts"] | null;
-};
-
-type TeamProfileDbRow = {
-  id: number;
-  user_id: string;
-  name: string;
-  role: string;
-  avatar: string;
-  specialty: string;
-  color: string;
-  stats: EditableTeamMember["stats"];
-  radar: EditableTeamMember["radar"];
-  monthly_posts: EditableTeamMember["monthlyPosts"];
-  email: string;
-  avatar_url: string;
-  bio: string;
-};
-
-type TeamProfileDbUpsert = TeamProfileDbRow;
-
-const teamProfilesTable = "team_profiles";
+const TEAM_PROFILES_KEY = "great-organico:team-profiles";
 
 const seedAccounts: EditableTeamMember[] = baseTeamMembers.map((member, index) => {
   const credentials = [
@@ -58,103 +33,32 @@ const seedAccounts: EditableTeamMember[] = baseTeamMembers.map((member, index) =
 
 export function useTeamProfiles() {
   const [profiles, setProfiles] = useState<EditableTeamMember[]>(seedAccounts);
-  const hydratedRef = useRef(false);
   const { session } = useAuthSession();
-  const supabaseClient = supabase;
-  const currentUserId = session?.user.id ?? null;
+  const lastSavedSnapshotRef = useRef<string | null>(null);
+
   const normalizedProfiles = useMemo(
     () => profiles.map((profile, index) => mergeTeamMember(profile, baseTeamMembers[index] ?? baseTeamMembers[0])),
     [profiles],
   );
 
   useEffect(() => {
-    if (!isSupabaseConfigured() || !supabaseClient) {
-      return;
-    }
+    const loadedProfiles = readLocalJson<EditableTeamMember[]>(TEAM_PROFILES_KEY, seedAccounts);
+    const nextProfiles = loadedProfiles.length > 0 ? loadedProfiles : seedAccounts;
+    setProfiles(nextProfiles);
+    lastSavedSnapshotRef.current = JSON.stringify(nextProfiles);
 
-    let cancelled = false;
-
-    const syncTeamProfiles = async () => {
-      const { data, error } = await supabaseClient.from(teamProfilesTable).select("*").order("id", { ascending: true });
-
-      if (cancelled) {
+    return subscribeLocalKey(TEAM_PROFILES_KEY, () => {
+      const nextProfiles = readLocalJson<EditableTeamMember[]>(TEAM_PROFILES_KEY, seedAccounts);
+      const resolvedProfiles = nextProfiles.length > 0 ? nextProfiles : seedAccounts;
+      const nextSnapshot = JSON.stringify(resolvedProfiles);
+      if (nextSnapshot === lastSavedSnapshotRef.current) {
         return;
       }
 
-      if (error) {
-        console.warn("Supabase team_profiles load failed:", error.message);
-        hydratedRef.current = true;
-        return;
-      }
-
-      const remoteProfiles = (data ?? []).map((row) => normalizeProfileRow(row as TeamProfileRow));
-
-      if (remoteProfiles.length > 0) {
-        setProfiles(remoteProfiles);
-        hydratedRef.current = true;
-        return;
-      }
-
-      const { error: seedError } = await supabaseClient.from(teamProfilesTable).upsert(seedAccounts, {
-        onConflict: "id",
-      });
-
-      if (cancelled) {
-        return;
-      }
-
-      if (seedError) {
-        console.warn("Supabase team_profiles seed failed:", seedError.message);
-        hydratedRef.current = true;
-        return;
-      }
-
-      setProfiles(seedAccounts);
-      hydratedRef.current = true;
-    };
-
-    void syncTeamProfiles();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [setProfiles, supabaseClient]);
-
-  useEffect(() => {
-    if (!hydratedRef.current || !isSupabaseConfigured() || !supabaseClient || !currentUserId) {
-      return;
-    }
-
-    let cancelled = false;
-
-    const persistTeamProfiles = async () => {
-      const currentProfile = normalizedProfiles.find((profile) => profile.userId === currentUserId);
-
-      if (!currentProfile) {
-        return;
-      }
-
-      const row = await toTeamProfileDbRow({
-        ...currentProfile,
-        userId: currentUserId,
-      });
-      const { error } = await supabaseClient.from(teamProfilesTable).upsert(row, { onConflict: "user_id" });
-
-      if (cancelled) {
-        return;
-      }
-
-      if (error) {
-        console.warn("Supabase team_profiles save failed:", error.message);
-      }
-    };
-
-    void persistTeamProfiles();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [normalizedProfiles, currentUserId, session?.user.email, supabaseClient]);
+      lastSavedSnapshotRef.current = nextSnapshot;
+      setProfiles(resolvedProfiles);
+    });
+  }, []);
 
   useEffect(() => {
     if (JSON.stringify(profiles) === JSON.stringify(normalizedProfiles)) {
@@ -163,6 +67,16 @@ export function useTeamProfiles() {
 
     setProfiles(normalizedProfiles);
   }, [normalizedProfiles, profiles, setProfiles]);
+
+  useEffect(() => {
+    const nextSnapshot = JSON.stringify(normalizedProfiles);
+    if (nextSnapshot === lastSavedSnapshotRef.current) {
+      return;
+    }
+
+    writeLocalJson(TEAM_PROFILES_KEY, normalizedProfiles);
+    lastSavedSnapshotRef.current = nextSnapshot;
+  }, [normalizedProfiles, session?.user.id]);
 
   return [normalizedProfiles, setProfiles] as const;
 }
@@ -181,9 +95,7 @@ export function useCurrentTeamMember() {
   }, [memberId, profiles]);
 
   const updateMember = (memberIdToUpdate: number, updater: (current: EditableTeamMember) => EditableTeamMember) => {
-    setProfiles((previous) =>
-      previous.map((item) => (item.id === memberIdToUpdate ? updater(item) : item)),
-    );
+    setProfiles((previous) => previous.map((item) => (item.id === memberIdToUpdate ? updater(item) : item)));
   };
 
   return {
@@ -197,32 +109,6 @@ export function useCurrentTeamMember() {
 
 export function getProfileDisplayName(member: EditableTeamMember | null | undefined) {
   return member?.name ?? "Usuário";
-}
-
-function normalizeProfileRow(row: TeamProfileRow) {
-  const id = typeof row.id === "string" ? Number(row.id) : row.id ?? 0;
-
-  return {
-    id: Number.isFinite(id) ? id : 0,
-    userId: row.userId ?? row.user_id ?? "",
-    name: row.name ?? "",
-    role: row.role ?? "",
-    avatar: row.avatar ?? "",
-    specialty: row.specialty ?? "",
-    color: row.color ?? "#e50914",
-    stats: row.stats ?? {
-      postsCreated: 0,
-      avgEngagement: 0,
-      goalsCompleted: 0,
-      performance: 0,
-      punctuality: 0,
-    },
-    radar: row.radar ?? [],
-    monthlyPosts: row.monthlyPosts ?? row.monthly_posts ?? [],
-    email: row.email ?? "",
-    avatarUrl: row.avatarUrl ?? row.avatar_url ?? "",
-    bio: row.bio ?? "",
-  } satisfies EditableTeamMember;
 }
 
 function mergeTeamMember(profile: EditableTeamMember, fallback: TeamMember) {
@@ -240,23 +126,5 @@ function mergeTeamMember(profile: EditableTeamMember, fallback: TeamMember) {
     monthlyPosts: monthlyPosts.length > 0 ? monthlyPosts : fallback.monthlyPosts,
     avatarUrl: profile.avatarUrl || "",
     bio: profile.bio || fallback.specialty,
-  };
-}
-
-async function toTeamProfileDbRow(profile: EditableTeamMember): Promise<TeamProfileDbUpsert> {
-  return {
-    id: profile.id,
-    user_id: profile.userId,
-    name: profile.name,
-    role: profile.role,
-    avatar: profile.avatar,
-    specialty: profile.specialty,
-    color: profile.color,
-    stats: profile.stats,
-    radar: profile.radar,
-    monthly_posts: profile.monthlyPosts,
-    email: profile.email,
-    avatar_url: profile.avatarUrl,
-    bio: profile.bio,
   };
 }

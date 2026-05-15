@@ -1,14 +1,156 @@
 import { useEffect, useState } from "react";
-import type { Session } from "@supabase/supabase-js";
-import { supabase } from "./data/supabase";
+import { readLocalJson, subscribeLocalKey, writeLocalJson, writeLocalText } from "./data/localStore";
 
 export type AuthState = {
-  session: Session | null;
+  session: LocalSession | null;
   ready: boolean;
 };
 
-function getAuthClient() {
-  return supabase;
+type DemoAccount = {
+  email: string;
+  id: string;
+  name: string;
+  password: string;
+};
+
+type LocalSession = {
+  access_token: string;
+  expires_at: number;
+  expires_in: number;
+  provider_refresh_token: null;
+  provider_token: null;
+  refresh_token: string;
+  token_type: "bearer";
+  user: {
+    app_metadata: {
+      provider: "local";
+      providers: string[];
+    };
+    aud: "authenticated";
+    created_at: string;
+    email: string;
+    email_confirmed_at: string;
+    id: string;
+    identities: never[];
+    last_sign_in_at: string;
+    phone: "";
+    role: "authenticated";
+    updated_at: string;
+    user_metadata: {
+      name: string;
+    };
+  };
+};
+
+const SESSION_KEY = "great-organico:auth-session";
+const PASSWORDS_KEY = "great-organico:demo-passwords";
+
+const demoAccounts: DemoAccount[] = [
+  {
+    email: "brendarayssa2706@gmail.com",
+    id: "4b8a4d0f-6f9e-4c3d-9a1d-2e1f4d58d101",
+    name: "Brenda",
+    password: "Great2026!",
+  },
+  {
+    email: "hannahleticia13@gmail.com",
+    id: "2c1b7d5f-88a4-4b7b-8cb5-7d8a6f5c2b02",
+    name: "Hannah",
+    password: "Great2026!",
+  },
+  {
+    email: "thiagomarquesdev23@hotmail.com",
+    id: "7d8a2c11-0f4e-4e7b-b0a9-3f9d77a1c303",
+    name: "Thiago",
+    password: "Great2026!",
+  },
+];
+
+function normalizeEmail(email: string) {
+  return email.trim().toLowerCase();
+}
+
+function getDemoAccount(email: string) {
+  return demoAccounts.find((account) => account.email === normalizeEmail(email)) ?? null;
+}
+
+function readPasswordMap() {
+  return readLocalJson<Record<string, string>>(PASSWORDS_KEY, {
+    "brendarayssa2706@gmail.com": "Great2026!",
+    "hannahleticia13@gmail.com": "Great2026!",
+    "thiagomarquesdev23@hotmail.com": "Great2026!",
+  });
+}
+
+function writePasswordMap(map: Record<string, string>) {
+  writeLocalJson(PASSWORDS_KEY, map);
+}
+
+function getStoredPassword(email: string) {
+  return readPasswordMap()[normalizeEmail(email)] ?? null;
+}
+
+function createSession(account: DemoAccount): LocalSession {
+  const timestamp = new Date().toISOString();
+
+  return {
+    access_token: `local-session:${account.id}`,
+    expires_at: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 365 * 10,
+    expires_in: 60 * 60 * 24 * 365 * 10,
+    provider_refresh_token: null,
+    provider_token: null,
+    refresh_token: `local-refresh:${account.id}`,
+    token_type: "bearer",
+    user: {
+      app_metadata: {
+        provider: "local",
+        providers: ["local"],
+      },
+      aud: "authenticated",
+      created_at: timestamp,
+      email: account.email,
+      email_confirmed_at: timestamp,
+      id: account.id,
+      identities: [],
+      last_sign_in_at: timestamp,
+      phone: "",
+      role: "authenticated",
+      updated_at: timestamp,
+      user_metadata: {
+        name: account.name,
+      },
+    },
+  };
+}
+
+function saveSession(session: LocalSession | null) {
+  if (session) {
+    writeLocalJson(SESSION_KEY, session);
+  } else {
+    writeLocalText(SESSION_KEY, null);
+  }
+}
+
+function readSession() {
+  const session = readLocalJson<LocalSession | null>(SESSION_KEY, null);
+  if (!session) {
+    return null;
+  }
+
+  const account = getDemoAccount(session.user.email);
+  if (!account) {
+    return null;
+  }
+
+  return createSession(account);
+}
+
+export function isDemoSession(session: LocalSession | null | undefined) {
+  return Boolean(session);
+}
+
+export function isDemoAccountEmail(email: string) {
+  return getDemoAccount(email) !== null;
 }
 
 export function useAuthSession() {
@@ -18,116 +160,66 @@ export function useAuthSession() {
   });
 
   useEffect(() => {
-    const client = getAuthClient();
-    if (!client) {
-      setState({ session: null, ready: true });
-      return undefined;
-    }
+    setState({ session: readSession(), ready: true });
 
-    let cancelled = false;
-
-    const loadSession = async () => {
-      const { data } = await client.auth.getSession();
-
-      if (!cancelled) {
-        setState({ session: data.session, ready: true });
-      }
-    };
-
-    const {
-      data: { subscription },
-    } = client.auth.onAuthStateChange((_event, session) => {
-      setState({ session, ready: true });
+    return subscribeLocalKey(SESSION_KEY, () => {
+      setState({ session: readSession(), ready: true });
     });
-
-    void loadSession();
-
-    return () => {
-      cancelled = true;
-      subscription.unsubscribe();
-    };
   }, []);
 
   return state;
 }
 
 export async function signInWithPassword(email: string, password: string) {
-  const client = getAuthClient();
-  if (!client) {
-    throw new Error("Supabase not configured.");
+  const account = getDemoAccount(email);
+  if (!account) {
+    throw new Error("Conta indisponível no modo local.");
   }
 
-  const { data, error } = await client.auth.signInWithPassword({
-    email: email.trim(),
-    password,
-  });
-
-  if (error) {
-    throw error;
+  const expectedPassword = getStoredPassword(account.email) ?? account.password;
+  if (password !== expectedPassword) {
+    throw new Error("Credenciais inválidas.");
   }
 
-  if (!data.session) {
-    throw new Error("Não foi possível iniciar a sessão.");
-  }
-
-  return data.session;
+  const session = createSession(account);
+  saveSession(session);
+  return session;
 }
 
-const bootstrapAccounts = new Set([
-  "brendarayssa2706@gmail.com",
-  "hannahleticia13@gmail.com",
-  "thiagomarquesdev23@hotmail.com",
-]);
-
 export async function signInOrBootstrapDemoAccount(email: string, password: string) {
-  try {
-    return await signInWithPassword(email, password);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "";
-    const isInvalidLogin = message.toLowerCase().includes("invalid login credentials");
-    const isNotConfirmed = message.toLowerCase().includes("email not confirmed");
-    const canBootstrap = bootstrapAccounts.has(email.trim().toLowerCase());
+  const account = getDemoAccount(email);
+  if (!account) {
+    return signInWithPassword(email, password);
+  }
 
-    if ((!isInvalidLogin && !isNotConfirmed) || !canBootstrap) {
-      throw error;
-    }
+  const currentPasswords = readPasswordMap();
+  if (!currentPasswords[account.email]) {
+    currentPasswords[account.email] = account.password;
+    writePasswordMap(currentPasswords);
+  }
 
-    const client = getAuthClient();
-    if (!client) {
-      throw error;
-    }
+  return signInWithPassword(account.email, password);
+}
 
-    const { error: bootstrapError } = await client.rpc("bootstrap_demo_account", {
-      demo_email: email.trim(),
-      demo_password: password,
-    });
+export async function updateDemoAccountPassword(userId: string, nextPassword: string) {
+  const account = demoAccounts.find((item) => item.id === userId);
+  if (!account) {
+    return;
+  }
 
-    if (bootstrapError) {
-      throw bootstrapError;
-    }
+  const currentPasswords = readPasswordMap();
+  currentPasswords[account.email] = nextPassword;
+  writePasswordMap(currentPasswords);
 
-    const retry = await client.auth.signInWithPassword({
-      email: email.trim(),
-      password,
-    });
-
-    if (retry.error) {
-      throw retry.error;
-    }
-
-    if (!retry.data.session) {
-      throw new Error("Não foi possível iniciar a sessão.");
-    }
-
-    return retry.data.session;
+  const currentSession = readSession();
+  if (currentSession?.user.id === userId) {
+    const refreshedSession = createSession(account);
+    refreshedSession.user.last_sign_in_at = new Date().toISOString();
+    refreshedSession.user.updated_at = new Date().toISOString();
+    saveSession(refreshedSession);
   }
 }
 
 export async function signOut() {
-  const client = getAuthClient();
-  if (!client) {
-    return;
-  }
-
-  await client.auth.signOut();
+  saveSession(null);
 }

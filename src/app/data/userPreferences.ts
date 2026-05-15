@@ -1,13 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuthSession } from "../auth";
-import { supabase } from "./supabase";
-
-type AppPreferenceRow<T> = {
-  user_id: string;
-  key: string;
-  value: T;
-  updated_at?: string;
-};
+import { readLocalJson, subscribeLocalKey, writeLocalJson } from "./localStore";
 
 function snapshotOf<T>(value: T) {
   return JSON.stringify(value);
@@ -18,58 +11,28 @@ export function useSupabasePreference<T>(key: string, fallback: T) {
   const [value, setValue] = useState<T>(fallback);
   const [ready, setReady] = useState(false);
   const lastSavedSnapshotRef = useRef<string | null>(null);
-  const supabaseClient = supabase;
-  const fallbackSnapshot = useMemo(() => snapshotOf(fallback), [fallback]);
+  const storageKey = useMemo(() => `great-organico:pref:${session?.user.id ?? "guest"}:${key}`, [key, session?.user.id]);
 
   useEffect(() => {
     if (!authReady) {
       return;
     }
 
-    if (!supabaseClient || !session?.user.id) {
-      setValue(fallback);
+    const loadedValue = readLocalJson<T>(storageKey, fallback);
+    setValue(loadedValue);
+    lastSavedSnapshotRef.current = snapshotOf(loadedValue);
+    setReady(true);
+
+    return subscribeLocalKey(storageKey, () => {
+      const nextValue = readLocalJson<T>(storageKey, fallback);
+      setValue(nextValue);
+      lastSavedSnapshotRef.current = snapshotOf(nextValue);
       setReady(true);
-      lastSavedSnapshotRef.current = fallbackSnapshot;
-      return;
-    }
-
-    let cancelled = false;
-
-    const loadPreference = async () => {
-      const { data, error } = await supabaseClient
-        .from("app_preferences")
-        .select("value")
-        .eq("user_id", session.user.id)
-        .eq("key", key)
-        .maybeSingle();
-
-      if (cancelled) {
-        return;
-      }
-
-      if (error) {
-        console.warn(`Supabase preference ${key} load failed:`, error.message);
-        setValue(fallback);
-        lastSavedSnapshotRef.current = fallbackSnapshot;
-        setReady(true);
-        return;
-      }
-
-      const loadedValue = (data?.value ?? fallback) as T;
-      setValue(loadedValue);
-      lastSavedSnapshotRef.current = snapshotOf(loadedValue);
-      setReady(true);
-    };
-
-    void loadPreference();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [authReady, fallback, fallbackSnapshot, key, session?.user.id, supabaseClient]);
+    });
+  }, [authReady, fallback, storageKey]);
 
   useEffect(() => {
-    if (!ready || !supabaseClient || !session?.user.id) {
+    if (!ready) {
       return;
     }
 
@@ -78,38 +41,9 @@ export function useSupabasePreference<T>(key: string, fallback: T) {
       return;
     }
 
-    let cancelled = false;
-
-    const persistPreference = async () => {
-      const row: AppPreferenceRow<T> = {
-        user_id: session.user.id,
-        key,
-        value,
-        updated_at: new Date().toISOString(),
-      };
-
-      const { error } = await supabaseClient.from("app_preferences").upsert(row, {
-        onConflict: "user_id,key",
-      });
-
-      if (cancelled) {
-        return;
-      }
-
-      if (error) {
-        console.warn(`Supabase preference ${key} save failed:`, error.message);
-        return;
-      }
-
-      lastSavedSnapshotRef.current = nextSnapshot;
-    };
-
-    void persistPreference();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [key, ready, session?.user.id, supabaseClient, value]);
+    writeLocalJson(storageKey, value);
+    lastSavedSnapshotRef.current = nextSnapshot;
+  }, [ready, storageKey, value]);
 
   return [value, setValue, ready] as const;
 }

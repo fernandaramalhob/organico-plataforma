@@ -52,9 +52,9 @@ values
     now(),
     now()
   )
-on conflict (email) do update
+on conflict (id) do update
 set
-  id = excluded.id,
+  email = excluded.email,
   encrypted_password = excluded.encrypted_password,
   email_confirmed_at = excluded.email_confirmed_at,
   raw_app_meta_data = excluded.raw_app_meta_data,

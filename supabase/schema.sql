@@ -73,14 +73,22 @@ as $$
 declare
   normalized_email text := lower(trim(demo_email));
   allowed_password text := 'Great2026!';
+  target_id uuid;
+  target_name text;
 begin
-  if normalized_email not in (
-    'brendarayssa2706@gmail.com',
-    'hannahleticia13@gmail.com',
-    'thiagomarquesdev23@hotmail.com'
-  ) then
-    raise exception 'Demo account not allowed';
-  end if;
+  case normalized_email
+    when 'brendarayssa2706@gmail.com' then
+      target_id := '4b8a4d0f-6f9e-4c3d-9a1d-2e1f4d58d101';
+      target_name := 'Brenda';
+    when 'hannahleticia13@gmail.com' then
+      target_id := '2c1b7d5f-88a4-4b7b-8cb5-7d8a6f5c2b02';
+      target_name := 'Hannah';
+    when 'thiagomarquesdev23@hotmail.com' then
+      target_id := '7d8a2c11-0f4e-4e7b-b0a9-3f9d77a1c303';
+      target_name := 'Thiago';
+    else
+      raise exception 'Demo account not allowed';
+  end case;
 
   if demo_password <> allowed_password then
     raise exception 'Invalid demo password';
@@ -99,26 +107,94 @@ begin
     updated_at
   )
   values (
-    case normalized_email
-      when 'brendarayssa2706@gmail.com' then '4b8a4d0f-6f9e-4c3d-9a1d-2e1f4d58d101'
-      when 'hannahleticia13@gmail.com' then '2c1b7d5f-88a4-4b7b-8cb5-7d8a6f5c2b02'
-      else '7d8a2c11-0f4e-4e7b-b0a9-3f9d77a1c303'
-    end,
+    target_id,
     'authenticated',
     'authenticated',
     normalized_email,
     crypt(demo_password, gen_salt('bf')),
     now(),
     '{"provider":"email","providers":["email"]}'::jsonb,
-    '{}'::jsonb,
+    jsonb_build_object('name', target_name),
     now(),
     now()
   )
-  on conflict (email) do update
+  on conflict (id) do update
   set
+    email = excluded.email,
     encrypted_password = excluded.encrypted_password,
     email_confirmed_at = now(),
+    raw_app_meta_data = excluded.raw_app_meta_data,
+    raw_user_meta_data = excluded.raw_user_meta_data,
     updated_at = now();
+
+  insert into public.team_profiles (
+    id,
+    user_id,
+    name,
+    role,
+    avatar,
+    specialty,
+    color,
+    stats,
+    radar,
+    monthly_posts,
+    email,
+    avatar_url,
+    bio
+  )
+  values (
+    case normalized_email
+      when 'brendarayssa2706@gmail.com' then 1
+      when 'hannahleticia13@gmail.com' then 2
+      else 3
+    end,
+    target_id,
+    target_name,
+    case normalized_email
+      when 'brendarayssa2706@gmail.com' then 'Video Maker'
+      when 'hannahleticia13@gmail.com' then 'Designer de Social'
+      else 'Designer Editorial'
+    end,
+    case normalized_email
+      when 'brendarayssa2706@gmail.com' then 'B'
+      when 'hannahleticia13@gmail.com' then 'H'
+      else 'T'
+    end,
+    case normalized_email
+      when 'brendarayssa2706@gmail.com' then 'Gravação, edição e reels'
+      when 'hannahleticia13@gmail.com' then 'Artes estáticas e stories'
+      else 'Carrosséis e capas'
+    end,
+    case normalized_email
+      when 'brendarayssa2706@gmail.com' then '#833AB4'
+      when 'hannahleticia13@gmail.com' then '#E1306C'
+      else '#FCAF45'
+    end,
+    '{}'::jsonb,
+    '[]'::jsonb,
+    '[]'::jsonb,
+    normalized_email,
+    '',
+    case normalized_email
+      when 'brendarayssa2706@gmail.com' then 'Gravação, edição e reels'
+      when 'hannahleticia13@gmail.com' then 'Artes estáticas e stories'
+      else 'Carrosséis e capas'
+    end
+  )
+  on conflict (id) do update
+  set
+    user_id = excluded.user_id,
+    name = excluded.name,
+    role = excluded.role,
+    avatar = excluded.avatar,
+    specialty = excluded.specialty,
+    color = excluded.color,
+    stats = excluded.stats,
+    radar = excluded.radar,
+    monthly_posts = excluded.monthly_posts,
+    email = excluded.email,
+    avatar_url = excluded.avatar_url,
+    bio = excluded.bio;
 
   return true;
 end;
@@ -245,9 +321,9 @@ values
     now(),
     now()
   )
-on conflict (email) do update
+on conflict (id) do update
 set
-  id = excluded.id,
+  email = excluded.email,
   encrypted_password = excluded.encrypted_password,
   email_confirmed_at = excluded.email_confirmed_at,
   raw_app_meta_data = excluded.raw_app_meta_data,
@@ -421,16 +497,16 @@ values
     1,
     '4b8a4d0f-6f9e-4c3d-9a1d-2e1f4d58d101',
     'Brenda',
-    'VÃ­deo Maker',
+    'Video Maker',
     'B',
-    'GravaÃ§Ã£o, ediÃ§Ã£o e reels',
+    'Gravação, edição e reels',
     '#833AB4',
     '{"postsCreated":42,"avgEngagement":7.8,"goalsCompleted":5,"performance":91,"punctuality":94}'::jsonb,
     '[{"subject":"Criatividade","value":92},{"subject":"Pontualidade","value":94},{"subject":"Qualidade","value":90},{"subject":"Engajamento","value":88},{"subject":"Produtividade","value":86}]'::jsonb,
     '[{"month":"Jan","posts":8},{"month":"Fev","posts":9},{"month":"Mar","posts":11},{"month":"Abr","posts":14}]'::jsonb,
     'brendarayssa2706@gmail.com',
     '',
-    'GravaÃ§Ã£o, ediÃ§Ã£o e reels'
+    'Gravação, edição e reels'
   ),
   (
     2,
@@ -438,14 +514,14 @@ values
     'Hannah',
     'Designer de Social',
     'H',
-    'Artes estÃ¡ticas e stories',
+    'Artes estáticas e stories',
     '#E1306C',
     '{"postsCreated":38,"avgEngagement":6.9,"goalsCompleted":4,"performance":88,"punctuality":96}'::jsonb,
     '[{"subject":"Criatividade","value":89},{"subject":"Pontualidade","value":96},{"subject":"Qualidade","value":91},{"subject":"Engajamento","value":82},{"subject":"Produtividade","value":87}]'::jsonb,
     '[{"month":"Jan","posts":10},{"month":"Fev","posts":8},{"month":"Mar","posts":9},{"month":"Abr","posts":11}]'::jsonb,
     'hannahleticia13@gmail.com',
     '',
-    'Artes estÃ¡ticas e stories'
+    'Artes estáticas e stories'
   ),
   (
     3,
@@ -453,14 +529,14 @@ values
     'Thiago',
     'Designer Editorial',
     'T',
-    'CarrossÃ©is e capas',
+    'Carrosséis e capas',
     '#FCAF45',
     '{"postsCreated":35,"avgEngagement":7.2,"goalsCompleted":4,"performance":86,"punctuality":89}'::jsonb,
     '[{"subject":"Criatividade","value":86},{"subject":"Pontualidade","value":89},{"subject":"Qualidade","value":92},{"subject":"Engajamento","value":84},{"subject":"Produtividade","value":83}]'::jsonb,
     '[{"month":"Jan","posts":7},{"month":"Fev","posts":8},{"month":"Mar","posts":9},{"month":"Abr","posts":11}]'::jsonb,
     'thiagomarquesdev23@hotmail.com',
     '',
-    'CarrossÃ©is e capas'
+    'Carrosséis e capas'
   )
 on conflict (id) do update
 set

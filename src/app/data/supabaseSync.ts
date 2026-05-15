@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
-import { useSupabasePreference } from "./userPreferences";
-import { isSupabaseConfigured, supabase } from "./supabase";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useAuthSession } from "../auth";
+import { readLocalJson, subscribeLocalKey, writeLocalJson } from "./localStore";
 
 type RowEnvelope<T> = {
   id: number;
@@ -26,145 +26,55 @@ export function useSupabaseSyncedListState<T extends { id: number }>(options: {
   table: string;
   fallback: T[];
 }) {
+  const { session } = useAuthSession();
+  const storageKey = useMemo(
+    () => `great-organico:list:${session?.user.id ?? "guest"}:${options.table}`,
+    [options.table, session?.user.id],
+  );
   const [value, setValue] = useState<T[]>(options.fallback);
-  const [hydrated, setHydrated] = useState(!isSupabaseConfigured());
+  const [hydrated, setHydrated] = useState(false);
   const hydratedRef = useRef(false);
-  const lastRemoteSnapshotRef = useRef<string | null>(null);
-  const lastRemoteIdsRef = useRef<number[]>([]);
-  const [hasSeededTable, setHasSeededTable, seedReady] = useSupabasePreference<boolean>(`sync-seeded:${options.table}`, false);
-  const supabaseClient = supabase;
+  const lastSnapshotRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!isSupabaseConfigured() || !supabaseClient || !seedReady) {
-      return;
-    }
+    const loadedRows = readLocalJson<RowEnvelope<T>[]>(storageKey, options.fallback.map((item, index) => toRowEnvelope(item, index)));
+    const loadedItems = loadedRows
+      .map((row) => row.data)
+      .filter((item): item is T => Boolean(item) && normalizeId((item as { id?: unknown }).id) !== null);
 
-    let cancelled = false;
+    setValue(loadedItems.length > 0 ? loadedItems : options.fallback);
+    lastSnapshotRef.current = snapshotOf(loadedItems.length > 0 ? loadedItems : options.fallback);
+    hydratedRef.current = true;
+    setHydrated(true);
 
-    const loadRemote = async () => {
-      const { data, error } = await supabaseClient
-        .from(options.table)
-        .select("id, sort_order, data")
-        .order("sort_order", { ascending: true })
-        .order("id", { ascending: true });
-
-      if (cancelled) {
-        return;
-      }
-
-      if (error) {
-        console.warn(`Supabase ${options.table} load failed:`, error.message);
-        hydratedRef.current = true;
-        setHydrated(true);
-        return;
-      }
-
-      const remoteItems = (data ?? [])
+    return subscribeLocalKey(storageKey, () => {
+      const nextRows = readLocalJson<RowEnvelope<T>[]>(storageKey, options.fallback.map((item, index) => toRowEnvelope(item, index)));
+      const nextItems = nextRows
         .map((row) => row.data)
         .filter((item): item is T => Boolean(item) && normalizeId((item as { id?: unknown }).id) !== null);
-
-      if (remoteItems.length > 0) {
-        if (!hasSeededTable) {
-          setHasSeededTable(true);
-        }
-
-        lastRemoteSnapshotRef.current = JSON.stringify(remoteItems);
-        lastRemoteIdsRef.current = remoteItems.map((item) => item.id);
-        setValue(remoteItems);
-        hydratedRef.current = true;
-        setHydrated(true);
-        return;
-      }
-
-      if (!hasSeededTable) {
-        const seedRows = options.fallback.map((item, index) => toRowEnvelope(item, index));
-        const { error: seedError } = await supabaseClient.from(options.table).upsert(seedRows, {
-          onConflict: "id",
-        });
-
-        if (cancelled) {
-          return;
-        }
-
-        if (seedError) {
-          console.warn(`Supabase ${options.table} seed failed:`, seedError.message);
-          hydratedRef.current = true;
-          setHydrated(true);
-          return;
-        }
-
-        setHasSeededTable(true);
-        lastRemoteSnapshotRef.current = JSON.stringify(options.fallback);
-        lastRemoteIdsRef.current = options.fallback.map((item) => item.id);
-        setValue(options.fallback);
-        hydratedRef.current = true;
-        setHydrated(true);
-        return;
-      }
-
-      lastRemoteSnapshotRef.current = "[]";
-      lastRemoteIdsRef.current = [];
-      setValue([]);
-      hydratedRef.current = true;
-      setHydrated(true);
-    };
-
-    void loadRemote();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [hasSeededTable, options.fallback, options.table, seedReady, setHasSeededTable, supabaseClient, setValue]);
+      setValue(nextItems.length > 0 ? nextItems : options.fallback);
+      lastSnapshotRef.current = snapshotOf(nextItems.length > 0 ? nextItems : options.fallback);
+    });
+  }, [options.fallback, storageKey]);
 
   useEffect(() => {
-    if (!hydratedRef.current || !isSupabaseConfigured() || !supabaseClient) {
+    if (!hydratedRef.current) {
       return;
     }
 
-    const snapshot = JSON.stringify(value);
-    if (snapshot === lastRemoteSnapshotRef.current) {
+    const snapshot = snapshotOf(value);
+    if (snapshot === lastSnapshotRef.current) {
       return;
     }
 
-    let cancelled = false;
-
-    const persistRemote = async () => {
-      const rows = value.map((item, index) => toRowEnvelope(item, index));
-      const currentIds = value.map((item) => item.id);
-
-      const { error: upsertError } = await supabaseClient.from(options.table).upsert(rows, {
-        onConflict: "id",
-      });
-
-      if (cancelled) {
-        return;
-      }
-
-      if (upsertError) {
-        console.warn(`Supabase ${options.table} save failed:`, upsertError.message);
-        return;
-      }
-
-      const removedIds = lastRemoteIdsRef.current.filter((id) => !currentIds.includes(id));
-
-      if (removedIds.length > 0) {
-        const { error: deleteError } = await supabaseClient.from(options.table).delete().in("id", removedIds);
-
-        if (!cancelled && deleteError) {
-          console.warn(`Supabase ${options.table} cleanup failed:`, deleteError.message);
-        }
-      }
-
-      lastRemoteSnapshotRef.current = snapshot;
-      lastRemoteIdsRef.current = currentIds;
-    };
-
-    void persistRemote();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [options.table, supabaseClient, value, seedReady]);
+    const rows = value.map((item, index) => toRowEnvelope(item, index));
+    writeLocalJson(storageKey, rows);
+    lastSnapshotRef.current = snapshot;
+  }, [storageKey, value]);
 
   return [value, setValue, hydrated] as const;
+}
+
+function snapshotOf<T>(value: T) {
+  return JSON.stringify(value);
 }

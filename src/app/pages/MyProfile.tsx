@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { PencilLine, Save, Upload, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, ActionButton, GlassPanel, PageHeader, PageTransition, SectionTitle, cn } from "../components/ui";
+import { updateDemoAccountPassword } from "../auth";
 import { useCurrentTeamMember, useTeamProfiles, type EditableTeamMember } from "../data/profiles";
-import { supabase } from "../data/supabase";
 import { useThemeMode } from "../theme";
 
 type ProfileEditForm = Omit<EditableTeamMember, "password"> & {
@@ -142,14 +142,7 @@ export function MyProfilePage() {
 
     try {
       if (editForm.password.trim()) {
-        if (!supabase) {
-          throw new Error("Supabase not configured.");
-        }
-
-        const { error } = await supabase.auth.updateUser({ password: editForm.password.trim() });
-        if (error) {
-          throw error;
-        }
+        await updateDemoAccountPassword(member.userId, editForm.password.trim());
       }
 
       updateMember(member.id, (current) => ({
