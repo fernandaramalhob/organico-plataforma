@@ -172,26 +172,33 @@ export function useTeamProfiles() {
     let cancelled = false;
 
     const loadProfiles = async () => {
-      const { data, error } = await client
-        .from("team_profiles")
-        .select("id,user_id,name,role,avatar,specialty,color,stats,radar,monthly_posts,email,avatar_url,bio")
-        .order("id", { ascending: true });
+      try {
+        const { data, error } = await client
+          .from("team_profiles")
+          .select("id,user_id,name,role,avatar,specialty,color,stats,radar,monthly_posts,email,avatar_url,bio")
+          .order("id", { ascending: true });
 
-      if (cancelled) {
-        return;
-      }
+        if (cancelled) {
+          return;
+        }
 
-      if (error) {
+        if (error) {
+          throw error;
+        }
+
+        const nextProfiles = (data ?? []).map((row) => toEditableTeamMember(row as TeamProfileRow));
+        const resolvedProfiles = nextProfiles.length > 0 ? nextProfiles : seedAccounts;
+        setProfiles(resolvedProfiles);
+        lastSavedSnapshotRef.current = snapshotOf(resolvedProfiles);
+      } catch (error) {
+        if (cancelled) {
+          return;
+        }
+
         console.error("Failed to load team profiles from Supabase", error);
         setProfiles(seedAccounts);
         lastSavedSnapshotRef.current = snapshotOf(seedAccounts);
-        return;
       }
-
-      const nextProfiles = (data ?? []).map((row) => toEditableTeamMember(row as TeamProfileRow));
-      const resolvedProfiles = nextProfiles.length > 0 ? nextProfiles : seedAccounts;
-      setProfiles(resolvedProfiles);
-      lastSavedSnapshotRef.current = snapshotOf(resolvedProfiles);
     };
 
     void loadProfiles();

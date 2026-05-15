@@ -31,19 +31,23 @@ async function fetchRemoteRows<T extends { id: number }>(table: string, fallback
     return fallback;
   }
 
-  const client = supabase;
+  try {
+    const client = supabase;
+    const { data, error } = await client.from(table).select("id, sort_order, data").order("sort_order", {
+      ascending: true,
+    });
 
-  const { data, error } = await client.from(table).select("id, sort_order, data").order("sort_order", {
-    ascending: true,
-  });
+    if (error) {
+      throw error;
+    }
 
-  if (error) {
-    throw error;
+    return (data ?? [])
+      .map((row) => row.data as T)
+      .filter((item): item is T => Boolean(item) && normalizeId((item as { id?: unknown }).id) !== null);
+  } catch (error) {
+    console.error(`Failed to load ${table} from Supabase`, error);
+    return fallback;
   }
-
-  return (data ?? [])
-    .map((row) => row.data as T)
-    .filter((item): item is T => Boolean(item) && normalizeId((item as { id?: unknown }).id) !== null);
 }
 
 async function persistRemoteRows<T extends { id: number }>(
@@ -139,7 +143,9 @@ export function useSupabaseSyncedListState<T extends { id: number }>(options: {
       setHydrated(true);
     };
 
-    void loadRemote();
+    void loadRemote().catch((error) => {
+      console.error(`Unexpected failure loading ${options.table}`, error);
+    });
 
     const channel = client.channel(`great-organico:${options.table}`).on(
       "postgres_changes",

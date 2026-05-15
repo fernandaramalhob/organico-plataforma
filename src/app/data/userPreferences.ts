@@ -37,28 +37,36 @@ export function useSupabasePreference<T>(key: string, fallback: T) {
     let cancelled = false;
 
     const loadPreference = async () => {
-      const { data, error } = await client
-        .from("app_preferences")
-        .select("value")
-        .eq("user_id", session.user.id)
-        .eq("key", key)
-        .maybeSingle();
+      try {
+        const { data, error } = await client
+          .from("app_preferences")
+          .select("value")
+          .eq("user_id", session.user.id)
+          .eq("key", key)
+          .maybeSingle();
 
-      if (cancelled) {
-        return;
-      }
+        if (cancelled) {
+          return;
+        }
 
-      if (error) {
+        if (error) {
+          throw error;
+        }
+
+        const loadedValue = (data?.value as T | undefined) ?? fallback;
+        setValue(loadedValue);
+        lastSavedSnapshotRef.current = snapshotOf(loadedValue);
+        setReady(true);
+      } catch (error) {
+        if (cancelled) {
+          return;
+        }
+
+        console.error(`Failed to load preference ${key}`, error);
         setValue(fallback);
         lastSavedSnapshotRef.current = snapshotOf(fallback);
         setReady(true);
-        return;
       }
-
-      const loadedValue = (data?.value as T | undefined) ?? fallback;
-      setValue(loadedValue);
-      lastSavedSnapshotRef.current = snapshotOf(loadedValue);
-      setReady(true);
     };
 
     void loadPreference();
