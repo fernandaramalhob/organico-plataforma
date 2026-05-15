@@ -112,167 +112,167 @@ drop policy if exists "app_preferences_delete_own" on public.app_preferences;
 create policy "team_profiles_select_all"
 on public.team_profiles
 for select
-using (auth.role() = 'authenticated');
+using (true);
 
 create policy "team_profiles_insert_all"
 on public.team_profiles
 for insert
-with check (auth.role() = 'authenticated' and auth.uid() = user_id);
+with check (true);
 
 create policy "team_profiles_update_all"
 on public.team_profiles
 for update
-using (auth.role() = 'authenticated' and auth.uid() = user_id)
-with check (auth.role() = 'authenticated' and auth.uid() = user_id);
+using (true)
+with check (true);
 
 create policy "team_profiles_delete_all"
 on public.team_profiles
 for delete
-using (auth.role() = 'authenticated' and auth.uid() = user_id);
+using (true);
 
 create policy "goals_select_all"
 on public.goals
 for select
-using (auth.role() = 'authenticated');
+using (true);
 
 create policy "goals_insert_all"
 on public.goals
 for insert
-with check (auth.role() = 'authenticated');
+with check (true);
 
 create policy "goals_update_all"
 on public.goals
 for update
-using (auth.role() = 'authenticated')
-with check (auth.role() = 'authenticated');
+using (true)
+with check (true);
 
 create policy "goals_delete_all"
 on public.goals
 for delete
-using (auth.role() = 'authenticated');
+using (true);
 
 create policy "ideas_select_all"
 on public.ideas
 for select
-using (auth.role() = 'authenticated');
+using (true);
 
 create policy "ideas_insert_all"
 on public.ideas
 for insert
-with check (auth.role() = 'authenticated');
+with check (true);
 
 create policy "ideas_update_all"
 on public.ideas
 for update
-using (auth.role() = 'authenticated')
-with check (auth.role() = 'authenticated');
+using (true)
+with check (true);
 
 create policy "ideas_delete_all"
 on public.ideas
 for delete
-using (auth.role() = 'authenticated');
+using (true);
 
 create policy "calendar_events_select_all"
 on public.calendar_events
 for select
-using (auth.role() = 'authenticated');
+using (true);
 
 create policy "calendar_events_insert_all"
 on public.calendar_events
 for insert
-with check (auth.role() = 'authenticated');
+with check (true);
 
 create policy "calendar_events_update_all"
 on public.calendar_events
 for update
-using (auth.role() = 'authenticated')
-with check (auth.role() = 'authenticated');
+using (true)
+with check (true);
 
 create policy "calendar_events_delete_all"
 on public.calendar_events
 for delete
-using (auth.role() = 'authenticated');
+using (true);
 
 create policy "history_events_select_all"
 on public.history_events
 for select
-using (auth.role() = 'authenticated');
+using (true);
 
 create policy "history_events_insert_all"
 on public.history_events
 for insert
-with check (auth.role() = 'authenticated');
+with check (true);
 
 create policy "history_events_update_all"
 on public.history_events
 for update
-using (auth.role() = 'authenticated')
-with check (auth.role() = 'authenticated');
+using (true)
+with check (true);
 
 create policy "history_events_delete_all"
 on public.history_events
 for delete
-using (auth.role() = 'authenticated');
+using (true);
 
 create policy "story_logs_select_all"
 on public.story_logs
 for select
-using (auth.role() = 'authenticated');
+using (true);
 
 create policy "story_logs_insert_all"
 on public.story_logs
 for insert
-with check (auth.role() = 'authenticated');
+with check (true);
 
 create policy "story_logs_update_all"
 on public.story_logs
 for update
-using (auth.role() = 'authenticated')
-with check (auth.role() = 'authenticated');
+using (true)
+with check (true);
 
 create policy "story_logs_delete_all"
 on public.story_logs
 for delete
-using (auth.role() = 'authenticated');
+using (true);
 
 create policy "posts_select_all"
 on public.posts
 for select
-using (auth.role() = 'authenticated');
+using (true);
 
 create policy "posts_insert_all"
 on public.posts
 for insert
-with check (auth.role() = 'authenticated');
+with check (true);
 
 create policy "posts_update_all"
 on public.posts
 for update
-using (auth.role() = 'authenticated')
-with check (auth.role() = 'authenticated');
+using (true)
+with check (true);
 
 create policy "posts_delete_all"
 on public.posts
 for delete
-using (auth.role() = 'authenticated');
+using (true);
 
 create policy "app_preferences_select_own"
 on public.app_preferences
 for select
-using (auth.role() = 'authenticated' and auth.uid() = user_id);
+using (true);
 
 create policy "app_preferences_insert_own"
 on public.app_preferences
 for insert
-with check (auth.role() = 'authenticated' and auth.uid() = user_id);
+with check (true);
 
 create policy "app_preferences_update_own"
 on public.app_preferences
 for update
-using (auth.role() = 'authenticated' and auth.uid() = user_id)
-with check (auth.role() = 'authenticated' and auth.uid() = user_id);
+using (true)
+with check (true);
 
 create policy "app_preferences_delete_own"
 on public.app_preferences
 for delete
-using (auth.role() = 'authenticated' and auth.uid() = user_id);
+using (true);
