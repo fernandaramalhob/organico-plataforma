@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
+import type { Session } from "@supabase/supabase-js";
+import { supabase, isSupabaseConfigured } from "./data/supabase";
 import { readLocalJson, subscribeLocalKey, writeLocalJson, writeLocalText } from "./data/localStore";
 
 export type AuthState = {
-  session: LocalSession | null;
+  session: AuthSession | null;
   ready: boolean;
 };
+
+type AuthSession = Session | LocalSession;
 
 type DemoAccount = {
   email: string;
@@ -131,7 +135,7 @@ function saveSession(session: LocalSession | null) {
   }
 }
 
-function readSession() {
+function readLocalSession() {
   const session = readLocalJson<LocalSession | null>(SESSION_KEY, null);
   if (!session) {
     return null;
@@ -145,12 +149,31 @@ function readSession() {
   return createSession(account);
 }
 
-export function isDemoSession(session: LocalSession | null | undefined) {
+function getDemoAccountId(email: string) {
+  return getDemoAccount(email)?.id ?? null;
+}
+
+export function isDemoSession(session: AuthSession | null | undefined) {
   return Boolean(session);
 }
 
 export function isDemoAccountEmail(email: string) {
   return getDemoAccount(email) !== null;
+}
+
+async function bootstrapSupabaseDemoAccount(email: string, password: string) {
+  if (!supabase) {
+    return;
+  }
+
+  const { error } = await supabase.rpc("bootstrap_demo_account", {
+    demo_email: email,
+    demo_password: password,
+  });
+
+  if (error) {
+    throw error;
+  }
 }
 
 export function useAuthSession() {
@@ -160,11 +183,39 @@ export function useAuthSession() {
   });
 
   useEffect(() => {
-    setState({ session: readSession(), ready: true });
+    if (!isSupabaseConfigured() || !supabase) {
+      setState({ session: readLocalSession(), ready: true });
 
-    return subscribeLocalKey(SESSION_KEY, () => {
-      setState({ session: readSession(), ready: true });
+      return subscribeLocalKey(SESSION_KEY, () => {
+        setState({ session: readLocalSession(), ready: true });
+      });
+    }
+
+    let ignore = false;
+
+    void supabase.auth.getSession().then(({ data, error }) => {
+      if (ignore) {
+        return;
+      }
+
+      if (error) {
+        setState({ session: null, ready: true });
+        return;
+      }
+
+      setState({ session: data.session ?? null, ready: true });
     });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setState({ session: nextSession, ready: true });
+    });
+
+    return () => {
+      ignore = true;
+      subscription.unsubscribe();
+    };
   }, []);
 
   return state;
@@ -173,12 +224,25 @@ export function useAuthSession() {
 export async function signInWithPassword(email: string, password: string) {
   const account = getDemoAccount(email);
   if (!account) {
-    throw new Error("Conta indisponível no modo local.");
+    throw new Error("Conta indisponivel.");
+  }
+
+  if (supabase) {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: account.email,
+      password,
+    });
+
+    if (error || !data.session) {
+      throw error ?? new Error("Nao foi possivel iniciar a sessao.");
+    }
+
+    return data.session;
   }
 
   const expectedPassword = getStoredPassword(account.email) ?? account.password;
   if (password !== expectedPassword) {
-    throw new Error("Credenciais inválidas.");
+    throw new Error("Credenciais invalidas.");
   }
 
   const session = createSession(account);
@@ -190,6 +254,15 @@ export async function signInOrBootstrapDemoAccount(email: string, password: stri
   const account = getDemoAccount(email);
   if (!account) {
     return signInWithPassword(email, password);
+  }
+
+  if (supabase) {
+    try {
+      return await signInWithPassword(account.email, password);
+    } catch (error) {
+      await bootstrapSupabaseDemoAccount(account.email, password);
+      return signInWithPassword(account.email, password);
+    }
   }
 
   const currentPasswords = readPasswordMap();
@@ -207,11 +280,19 @@ export async function updateDemoAccountPassword(userId: string, nextPassword: st
     return;
   }
 
+  if (supabase) {
+    const { error } = await supabase.auth.updateUser({ password: nextPassword });
+    if (error) {
+      throw error;
+    }
+    return;
+  }
+
   const currentPasswords = readPasswordMap();
   currentPasswords[account.email] = nextPassword;
   writePasswordMap(currentPasswords);
 
-  const currentSession = readSession();
+  const currentSession = readLocalSession();
   if (currentSession?.user.id === userId) {
     const refreshedSession = createSession(account);
     refreshedSession.user.last_sign_in_at = new Date().toISOString();
@@ -221,5 +302,17 @@ export async function updateDemoAccountPassword(userId: string, nextPassword: st
 }
 
 export async function signOut() {
+  if (supabase) {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      throw error;
+    }
+    return;
+  }
+
   saveSession(null);
+}
+
+export function getDemoAccountUserId(email: string) {
+  return getDemoAccountId(email);
 }

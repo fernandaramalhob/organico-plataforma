@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuthSession } from "../auth";
+import { isSupabaseConfigured, supabase } from "./supabase";
 import { readLocalJson, subscribeLocalKey, writeLocalJson } from "./localStore";
 
 function snapshotOf<T>(value: T) {
@@ -18,18 +19,78 @@ export function useSupabasePreference<T>(key: string, fallback: T) {
       return;
     }
 
-    const loadedValue = readLocalJson<T>(storageKey, fallback);
-    setValue(loadedValue);
-    lastSavedSnapshotRef.current = snapshotOf(loadedValue);
-    setReady(true);
-
-    return subscribeLocalKey(storageKey, () => {
-      const nextValue = readLocalJson<T>(storageKey, fallback);
-      setValue(nextValue);
-      lastSavedSnapshotRef.current = snapshotOf(nextValue);
+    if (!isSupabaseConfigured() || !supabase || !session) {
+      const loadedValue = readLocalJson<T>(storageKey, fallback);
+      setValue(loadedValue);
+      lastSavedSnapshotRef.current = snapshotOf(loadedValue);
       setReady(true);
-    });
-  }, [authReady, fallback, storageKey]);
+
+      return subscribeLocalKey(storageKey, () => {
+        const nextValue = readLocalJson<T>(storageKey, fallback);
+        setValue(nextValue);
+        lastSavedSnapshotRef.current = snapshotOf(nextValue);
+        setReady(true);
+      });
+    }
+
+    const client = supabase;
+    let cancelled = false;
+
+    const loadPreference = async () => {
+      const { data, error } = await client
+        .from("app_preferences")
+        .select("value")
+        .eq("user_id", session.user.id)
+        .eq("key", key)
+        .maybeSingle();
+
+      if (cancelled) {
+        return;
+      }
+
+      if (error) {
+        setValue(fallback);
+        lastSavedSnapshotRef.current = snapshotOf(fallback);
+        setReady(true);
+        return;
+      }
+
+      const loadedValue = (data?.value as T | undefined) ?? fallback;
+      setValue(loadedValue);
+      lastSavedSnapshotRef.current = snapshotOf(loadedValue);
+      setReady(true);
+    };
+
+    void loadPreference();
+
+    const channel = client
+      .channel(`great-organico:pref:${key}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "app_preferences",
+        },
+        (payload) => {
+          const row = payload.new as { user_id?: string; key?: string; value?: T } | null;
+          if (row?.user_id !== session.user.id || row?.key !== key) {
+            return;
+          }
+
+          const nextValue = row.value ?? fallback;
+          setValue(nextValue);
+          lastSavedSnapshotRef.current = snapshotOf(nextValue);
+          setReady(true);
+        },
+      )
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      void client.removeChannel(channel);
+    };
+  }, [authReady, fallback, key, session?.user.id, storageKey]);
 
   useEffect(() => {
     if (!ready) {
@@ -41,9 +102,36 @@ export function useSupabasePreference<T>(key: string, fallback: T) {
       return;
     }
 
-    writeLocalJson(storageKey, value);
-    lastSavedSnapshotRef.current = nextSnapshot;
-  }, [ready, storageKey, value]);
+    if (!isSupabaseConfigured() || !supabase || !session) {
+      writeLocalJson(storageKey, value);
+      lastSavedSnapshotRef.current = nextSnapshot;
+      return;
+    }
+
+    const client = supabase;
+
+    void (async () => {
+      const { error } = await client.from("app_preferences").upsert(
+        {
+          user_id: session.user.id,
+          key,
+          value,
+          updated_at: new Date().toISOString(),
+        },
+        {
+          onConflict: "user_id,key",
+        },
+      );
+
+      if (error) {
+        throw error;
+      }
+
+      lastSavedSnapshotRef.current = nextSnapshot;
+    })().catch((error: unknown) => {
+      console.error(`Failed to sync preference ${key}`, error);
+    });
+  }, [key, ready, session, storageKey, value]);
 
   return [value, setValue, ready] as const;
 }

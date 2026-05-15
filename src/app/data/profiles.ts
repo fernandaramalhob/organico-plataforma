@@ -1,17 +1,42 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuthSession } from "../auth";
 import { usePosts } from "./posts";
+import { isSupabaseConfigured, supabase } from "./supabase";
 import { readLocalJson, subscribeLocalKey, writeLocalJson } from "./localStore";
-import { calendarEvents as seedCalendarEvents, goals as seedGoals, storyLogs as seedStoryLogs, teamMembers as baseTeamMembers, type TeamMember } from "./mockData";
+import {
+  calendarEvents as seedCalendarEvents,
+  goals as seedGoals,
+  storyLogs as seedStoryLogs,
+  teamMembers as baseTeamMembers,
+  type TeamMember,
+  type CalendarEvent,
+  type Goal,
+  type StoryLog,
+} from "./mockData";
 import { useSupabaseSyncedListState } from "./supabaseSync";
 import { deriveTeamProfiles } from "./teamAnalytics";
-import { type CalendarEvent, type Goal, type StoryLog } from "./mockData";
 
 export type EditableTeamMember = TeamMember & {
   userId: string;
   email: string;
   password?: string;
   avatarUrl: string;
+  bio: string;
+};
+
+type TeamProfileRow = {
+  id: number;
+  user_id: string;
+  name: string;
+  role: string;
+  avatar: string;
+  specialty: string;
+  color: string;
+  stats: EditableTeamMember["stats"];
+  radar: EditableTeamMember["radar"];
+  monthly_posts: EditableTeamMember["monthlyPosts"];
+  email: string;
+  avatar_url: string;
   bio: string;
 };
 
@@ -35,9 +60,67 @@ const seedAccounts: EditableTeamMember[] = baseTeamMembers.map((member, index) =
   };
 });
 
+function snapshotOf<T>(value: T) {
+  return JSON.stringify(value);
+}
+
+function toEditableTeamMember(row: TeamProfileRow): EditableTeamMember {
+  return {
+    id: row.id,
+    name: row.name,
+    role: row.role,
+    avatar: row.avatar,
+    specialty: row.specialty,
+    color: row.color,
+    stats: row.stats,
+    radar: row.radar,
+    monthlyPosts: row.monthly_posts,
+    userId: row.user_id,
+    email: row.email,
+    avatarUrl: row.avatar_url,
+    bio: row.bio,
+  };
+}
+
+function toTeamProfileRow(profile: EditableTeamMember): TeamProfileRow {
+  return {
+    id: profile.id,
+    user_id: profile.userId,
+    name: profile.name,
+    role: profile.role,
+    avatar: profile.avatar,
+    specialty: profile.specialty,
+    color: profile.color,
+    stats: profile.stats,
+    radar: profile.radar,
+    monthly_posts: profile.monthlyPosts,
+    email: profile.email,
+    avatar_url: profile.avatarUrl,
+    bio: profile.bio,
+  };
+}
+
+function mergeTeamMember(profile: EditableTeamMember, fallback: TeamMember) {
+  const radar = profile.radar ?? [];
+  const monthlyPosts = profile.monthlyPosts ?? [];
+
+  return {
+    ...fallback,
+    ...profile,
+    stats: {
+      ...fallback.stats,
+      ...profile.stats,
+    },
+    radar: radar.length > 0 ? radar : fallback.radar,
+    monthlyPosts: monthlyPosts.length > 0 ? monthlyPosts : fallback.monthlyPosts,
+    avatarUrl: profile.avatarUrl || "",
+    bio: profile.bio || fallback.specialty,
+  };
+}
+
 export function useTeamProfiles() {
   const [profiles, setProfiles] = useState<EditableTeamMember[]>(seedAccounts);
-  const { session } = useAuthSession();
+  const { session, ready: authReady } = useAuthSession();
   const [posts] = usePosts();
   const [goals] = useSupabaseSyncedListState<Goal>({ key: "goals", table: "goals", fallback: seedGoals });
   const [calendarEvents] = useSupabaseSyncedListState<CalendarEvent>({
@@ -52,51 +135,116 @@ export function useTeamProfiles() {
   });
   const lastSavedSnapshotRef = useRef<string | null>(null);
 
-  const normalizedProfiles = useMemo(
+  const mergedProfiles = useMemo(
     () => profiles.map((profile, index) => mergeTeamMember(profile, baseTeamMembers[index] ?? baseTeamMembers[0])),
     [profiles],
   );
   const derivedProfiles = useMemo(
-    () => deriveTeamProfiles(normalizedProfiles, posts, goals, calendarEvents, storyLogItems),
-    [calendarEvents, goals, normalizedProfiles, posts, storyLogItems],
+    () => deriveTeamProfiles(mergedProfiles, posts, goals, calendarEvents, storyLogItems),
+    [calendarEvents, goals, mergedProfiles, posts, storyLogItems],
   );
 
   useEffect(() => {
-    const loadedProfiles = readLocalJson<EditableTeamMember[]>(TEAM_PROFILES_KEY, seedAccounts);
-    const nextProfiles = loadedProfiles.length > 0 ? loadedProfiles : seedAccounts;
-    setProfiles(nextProfiles);
-    lastSavedSnapshotRef.current = JSON.stringify(nextProfiles);
-
-    return subscribeLocalKey(TEAM_PROFILES_KEY, () => {
-      const nextProfiles = readLocalJson<EditableTeamMember[]>(TEAM_PROFILES_KEY, seedAccounts);
-      const resolvedProfiles = nextProfiles.length > 0 ? nextProfiles : seedAccounts;
-      const nextSnapshot = JSON.stringify(resolvedProfiles);
-      if (nextSnapshot === lastSavedSnapshotRef.current) {
-        return;
-      }
-
-      lastSavedSnapshotRef.current = nextSnapshot;
-      setProfiles(resolvedProfiles);
-    });
-  }, []);
-
-  useEffect(() => {
-    if (JSON.stringify(profiles) === JSON.stringify(normalizedProfiles)) {
+    if (!authReady) {
       return;
     }
 
-    setProfiles(normalizedProfiles);
-  }, [normalizedProfiles, profiles, setProfiles]);
+    if (!isSupabaseConfigured() || !supabase || !session) {
+      const loadedProfiles = readLocalJson<EditableTeamMember[]>(TEAM_PROFILES_KEY, seedAccounts);
+      const nextProfiles = loadedProfiles.length > 0 ? loadedProfiles : seedAccounts;
+      setProfiles(nextProfiles);
+      lastSavedSnapshotRef.current = snapshotOf(nextProfiles);
+
+      return subscribeLocalKey(TEAM_PROFILES_KEY, () => {
+        const nextProfiles = readLocalJson<EditableTeamMember[]>(TEAM_PROFILES_KEY, seedAccounts);
+        const resolvedProfiles = nextProfiles.length > 0 ? nextProfiles : seedAccounts;
+        const nextSnapshot = snapshotOf(resolvedProfiles);
+        if (nextSnapshot === lastSavedSnapshotRef.current) {
+          return;
+        }
+
+        lastSavedSnapshotRef.current = nextSnapshot;
+        setProfiles(resolvedProfiles);
+      });
+    }
+
+    const client = supabase;
+    let cancelled = false;
+
+    const loadProfiles = async () => {
+      const { data, error } = await client
+        .from("team_profiles")
+        .select("id,user_id,name,role,avatar,specialty,color,stats,radar,monthly_posts,email,avatar_url,bio")
+        .order("id", { ascending: true });
+
+      if (cancelled) {
+        return;
+      }
+
+      if (error) {
+        console.error("Failed to load team profiles from Supabase", error);
+        setProfiles(seedAccounts);
+        lastSavedSnapshotRef.current = snapshotOf(seedAccounts);
+        return;
+      }
+
+      const nextProfiles = (data ?? []).map((row) => toEditableTeamMember(row as TeamProfileRow));
+      const resolvedProfiles = nextProfiles.length > 0 ? nextProfiles : seedAccounts;
+      setProfiles(resolvedProfiles);
+      lastSavedSnapshotRef.current = snapshotOf(resolvedProfiles);
+    };
+
+    void loadProfiles();
+
+    const channel = client
+      .channel("great-organico:team_profiles")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "team_profiles",
+        },
+        () => {
+          void loadProfiles();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      void client.removeChannel(channel);
+    };
+  }, [authReady, session, seedAccounts]);
 
   useEffect(() => {
-    const nextSnapshot = JSON.stringify(normalizedProfiles);
+    const nextSnapshot = snapshotOf(profiles);
     if (nextSnapshot === lastSavedSnapshotRef.current) {
       return;
     }
 
-    writeLocalJson(TEAM_PROFILES_KEY, normalizedProfiles);
-    lastSavedSnapshotRef.current = nextSnapshot;
-  }, [normalizedProfiles, session?.user.id]);
+    if (!isSupabaseConfigured() || !supabase || !session) {
+      writeLocalJson(TEAM_PROFILES_KEY, profiles);
+      lastSavedSnapshotRef.current = nextSnapshot;
+      return;
+    }
+
+    const client = supabase;
+
+    void (async () => {
+      const { error } = await client.from("team_profiles").upsert(profiles.map(toTeamProfileRow), {
+        onConflict: "id",
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      lastSavedSnapshotRef.current = nextSnapshot;
+    })().catch((error: unknown) => {
+      console.error("Failed to sync team profiles to Supabase", error);
+    });
+  }, [profiles, session]);
 
   return [derivedProfiles, setProfiles] as const;
 }
@@ -128,23 +276,5 @@ export function useCurrentTeamMember() {
 }
 
 export function getProfileDisplayName(member: EditableTeamMember | null | undefined) {
-  return member?.name ?? "Usuário";
-}
-
-function mergeTeamMember(profile: EditableTeamMember, fallback: TeamMember) {
-  const radar = profile.radar ?? [];
-  const monthlyPosts = profile.monthlyPosts ?? [];
-
-  return {
-    ...fallback,
-    ...profile,
-    stats: {
-      ...fallback.stats,
-      ...profile.stats,
-    },
-    radar: radar.length > 0 ? radar : fallback.radar,
-    monthlyPosts: monthlyPosts.length > 0 ? monthlyPosts : fallback.monthlyPosts,
-    avatarUrl: profile.avatarUrl || "",
-    bio: profile.bio || fallback.specialty,
-  };
+  return member?.name ?? "Usuario";
 }

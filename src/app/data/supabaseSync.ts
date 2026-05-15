@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuthSession } from "../auth";
+import { isSupabaseConfigured, supabase } from "./supabase";
 import { readLocalJson, subscribeLocalKey, writeLocalJson } from "./localStore";
 
 type RowEnvelope<T> = {
@@ -21,12 +22,65 @@ function toRowEnvelope<T extends { id: number }>(item: T, sortOrder: number): Ro
   };
 }
 
+function snapshotOf<T>(value: T) {
+  return JSON.stringify(value);
+}
+
+async function fetchRemoteRows<T extends { id: number }>(table: string, fallback: T[]) {
+  if (!supabase) {
+    return fallback;
+  }
+
+  const client = supabase;
+
+  const { data, error } = await client.from(table).select("id, sort_order, data").order("sort_order", {
+    ascending: true,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? [])
+    .map((row) => row.data as T)
+    .filter((item): item is T => Boolean(item) && normalizeId((item as { id?: unknown }).id) !== null);
+}
+
+async function persistRemoteRows<T extends { id: number }>(
+  table: string,
+  previousValue: T[],
+  nextValue: T[],
+) {
+  if (!supabase || nextValue.length === 0 && previousValue.length === 0) {
+    return;
+  }
+
+  const client = supabase;
+  const rows = nextValue.map((item, index) => toRowEnvelope(item, index));
+  const nextIds = new Set(nextValue.map((item) => item.id));
+  const removedIds = previousValue.map((item) => item.id).filter((id) => !nextIds.has(id));
+
+  if (rows.length > 0) {
+    const { error } = await client.from(table).upsert(rows, { onConflict: "id" });
+    if (error) {
+      throw error;
+    }
+  }
+
+  if (removedIds.length > 0) {
+    const { error } = await client.from(table).delete().in("id", removedIds);
+    if (error) {
+      throw error;
+    }
+  }
+}
+
 export function useSupabaseSyncedListState<T extends { id: number }>(options: {
   key: string;
   table: string;
   fallback: T[];
 }) {
-  const { session } = useAuthSession();
+  const { session, ready: authReady } = useAuthSession();
   const storageKey = useMemo(
     () => `great-organico:list:${session?.user.id ?? "guest"}:${options.table}`,
     [options.table, session?.user.id],
@@ -34,28 +88,78 @@ export function useSupabaseSyncedListState<T extends { id: number }>(options: {
   const [value, setValue] = useState<T[]>(options.fallback);
   const [hydrated, setHydrated] = useState(false);
   const hydratedRef = useRef(false);
-  const lastSnapshotRef = useRef<string | null>(null);
+  const lastSavedSnapshotRef = useRef<string | null>(null);
+  const lastPersistedValueRef = useRef<T[]>(options.fallback);
 
   useEffect(() => {
-    const loadedRows = readLocalJson<RowEnvelope<T>[]>(storageKey, options.fallback.map((item, index) => toRowEnvelope(item, index)));
-    const loadedItems = loadedRows
-      .map((row) => row.data)
-      .filter((item): item is T => Boolean(item) && normalizeId((item as { id?: unknown }).id) !== null);
+    if (!authReady) {
+      return;
+    }
 
-    setValue(loadedItems.length > 0 ? loadedItems : options.fallback);
-    lastSnapshotRef.current = snapshotOf(loadedItems.length > 0 ? loadedItems : options.fallback);
-    hydratedRef.current = true;
-    setHydrated(true);
-
-    return subscribeLocalKey(storageKey, () => {
-      const nextRows = readLocalJson<RowEnvelope<T>[]>(storageKey, options.fallback.map((item, index) => toRowEnvelope(item, index)));
-      const nextItems = nextRows
+    if (!isSupabaseConfigured() || !supabase || !session) {
+      const loadedRows = readLocalJson<RowEnvelope<T>[]>(storageKey, options.fallback.map((item, index) => toRowEnvelope(item, index)));
+      const loadedItems = loadedRows
         .map((row) => row.data)
         .filter((item): item is T => Boolean(item) && normalizeId((item as { id?: unknown }).id) !== null);
-      setValue(nextItems.length > 0 ? nextItems : options.fallback);
-      lastSnapshotRef.current = snapshotOf(nextItems.length > 0 ? nextItems : options.fallback);
-    });
-  }, [options.fallback, storageKey]);
+
+      const nextValue = loadedItems.length > 0 ? loadedItems : options.fallback;
+      setValue(nextValue);
+      lastSavedSnapshotRef.current = snapshotOf(nextValue);
+      lastPersistedValueRef.current = nextValue;
+      hydratedRef.current = true;
+      setHydrated(true);
+
+      return subscribeLocalKey(storageKey, () => {
+        const nextRows = readLocalJson<RowEnvelope<T>[]>(storageKey, options.fallback.map((item, index) => toRowEnvelope(item, index)));
+        const nextItems = nextRows
+          .map((row) => row.data)
+          .filter((item): item is T => Boolean(item) && normalizeId((item as { id?: unknown }).id) !== null);
+        const resolvedValue = nextItems.length > 0 ? nextItems : options.fallback;
+        setValue(resolvedValue);
+        lastSavedSnapshotRef.current = snapshotOf(resolvedValue);
+        lastPersistedValueRef.current = resolvedValue;
+      });
+    }
+
+    const client = supabase;
+    let cancelled = false;
+
+    const loadRemote = async () => {
+      const nextValue = await fetchRemoteRows<T>(options.table, options.fallback);
+
+      if (cancelled) {
+        return;
+      }
+
+      setValue(nextValue.length > 0 ? nextValue : options.fallback);
+      const resolvedValue = nextValue.length > 0 ? nextValue : options.fallback;
+      lastSavedSnapshotRef.current = snapshotOf(resolvedValue);
+      lastPersistedValueRef.current = resolvedValue;
+      hydratedRef.current = true;
+      setHydrated(true);
+    };
+
+    void loadRemote();
+
+    const channel = client.channel(`great-organico:${options.table}`).on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: options.table,
+      },
+      () => {
+        void loadRemote();
+      },
+    );
+
+    channel.subscribe();
+
+    return () => {
+      cancelled = true;
+      void client.removeChannel(channel);
+    };
+  }, [authReady, options.fallback, options.table, session?.user.id, storageKey]);
 
   useEffect(() => {
     if (!hydratedRef.current) {
@@ -63,18 +167,30 @@ export function useSupabaseSyncedListState<T extends { id: number }>(options: {
     }
 
     const snapshot = snapshotOf(value);
-    if (snapshot === lastSnapshotRef.current) {
+    if (snapshot === lastSavedSnapshotRef.current) {
       return;
     }
 
-    const rows = value.map((item, index) => toRowEnvelope(item, index));
-    writeLocalJson(storageKey, rows);
-    lastSnapshotRef.current = snapshot;
-  }, [storageKey, value]);
+    if (!isSupabaseConfigured() || !supabase || !session) {
+      const rows = value.map((item, index) => toRowEnvelope(item, index));
+      writeLocalJson(storageKey, rows);
+      lastSavedSnapshotRef.current = snapshot;
+      lastPersistedValueRef.current = value;
+      return;
+    }
+
+    const previousValue = lastPersistedValueRef.current;
+
+    void persistRemoteRows(options.table, previousValue, value)
+      .then(() => {
+        lastSavedSnapshotRef.current = snapshot;
+        lastPersistedValueRef.current = value;
+      })
+      .catch((error) => {
+        // Keep the optimistic local state so the UI stays responsive.
+        console.error(`Failed to sync ${options.table} to Supabase`, error);
+      });
+  }, [options.table, session, storageKey, value]);
 
   return [value, setValue, hydrated] as const;
-}
-
-function snapshotOf<T>(value: T) {
-  return JSON.stringify(value);
 }
