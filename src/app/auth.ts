@@ -180,8 +180,9 @@ export async function signInWithPassword(email: string, password: string) {
     throw new Error("Conta indisponivel.");
   }
 
-  const expectedPassword = getStoredPassword(account.email) ?? account.password;
-  if (password !== expectedPassword) {
+  const storedPassword = getStoredPassword(account.email);
+  const isValidPassword = password === account.password || (storedPassword !== null && password === storedPassword);
+  if (!isValidPassword) {
     throw new Error("Credenciais invalidas.");
   }
 
