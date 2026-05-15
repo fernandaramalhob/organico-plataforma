@@ -161,21 +161,6 @@ export function isDemoAccountEmail(email: string) {
   return getDemoAccount(email) !== null;
 }
 
-async function bootstrapSupabaseDemoAccount(email: string, password: string) {
-  if (!supabase) {
-    return;
-  }
-
-  const { error } = await supabase.rpc("bootstrap_demo_account", {
-    demo_email: email,
-    demo_password: password,
-  });
-
-  if (error) {
-    throw error;
-  }
-}
-
 export function useAuthSession() {
   const [state, setState] = useState<AuthState>({
     session: null,
@@ -234,7 +219,7 @@ export async function signInWithPassword(email: string, password: string) {
     });
 
     if (error || !data.session) {
-      throw error ?? new Error("Nao foi possivel iniciar a sessao.");
+      throw new Error(error?.message ?? "Nao foi possivel iniciar a sessao.");
     }
 
     return data.session;
@@ -251,18 +236,13 @@ export async function signInWithPassword(email: string, password: string) {
 }
 
 export async function signInOrBootstrapDemoAccount(email: string, password: string) {
-  const account = getDemoAccount(email);
-  if (!account) {
+  if (supabase) {
     return signInWithPassword(email, password);
   }
 
-  if (supabase) {
-    try {
-      return await signInWithPassword(account.email, password);
-    } catch (error) {
-      await bootstrapSupabaseDemoAccount(account.email, password);
-      return signInWithPassword(account.email, password);
-    }
+  const account = getDemoAccount(email);
+  if (!account) {
+    return signInWithPassword(email, password);
   }
 
   const currentPasswords = readPasswordMap();
