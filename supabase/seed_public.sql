@@ -18,7 +18,7 @@ values
     1,
     '4b8a4d0f-6f9e-4c3d-9a1d-2e1f4d58d101',
     'Brenda',
-    'Video Maker',
+    'Video Make"r',
     'B',
     'Gravação, edição e reels',
     '#833AB4',
