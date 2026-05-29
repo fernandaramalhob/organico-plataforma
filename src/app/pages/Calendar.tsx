@@ -150,12 +150,14 @@ function EventChip({
   compact = false,
   onClick,
   onDelete,
+  dataCy,
 }: {
   event: CalendarEvent;
   teamMembers: { id: number; name: string; color: string }[];
   compact?: boolean;
   onClick?: () => void;
   onDelete?: () => void;
+  dataCy?: string;
 }) {
   const responsibleIds = event.responsibleIds?.filter((value, index, array) => array.indexOf(value) === index) ?? [];
   const primaryResponsibleId = responsibleIds[0] ?? event.responsibleId;
@@ -178,6 +180,7 @@ function EventChip({
           event.stopPropagation();
           onClick?.();
         }}
+        data-cy={dataCy}
         className={cn(
           "relative w-full rounded-[1rem] border text-left transition duration-200 hover:-translate-y-0.5 hover:shadow-sm",
           compact ? "px-2.5 py-1.5 shadow-none" : "px-3 py-2 shadow-sm",
@@ -215,7 +218,7 @@ function EventChip({
       </button>
       {onDelete ? (
         <div className="absolute right-1 top-1 z-20 opacity-0 transition group-hover:opacity-100">
-          <DeleteIconButton onClick={onDelete} />
+          <DeleteIconButton onClick={onDelete} dataCy={dataCy ? `${dataCy}-delete` : undefined} />
         </div>
       ) : null}
     </div>
@@ -845,7 +848,9 @@ function SideAgenda({
     <div className={cn(
       "rounded-[1.75rem] border border-border/60 p-4 shadow-sm",
       isDark ? "bg-card/95 dark:shadow-[0_18px_36px_rgba(0,0,0,0.18)]" : "bg-white shadow-[0_18px_36px_rgba(15,23,42,0.06)]",
-    )}>
+    )}
+      data-cy="calendar-side-agenda"
+    >
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-foreground">Agenda rápida</h3>
         <CirclePlus className="h-4 w-4 text-muted-foreground" />
@@ -859,9 +864,10 @@ function SideAgenda({
               key={event.id}
               className="group relative rounded-2xl border border-border/60 p-3"
               style={{ backgroundColor: `${member.color}06` }}
+              data-cy={`calendar-side-event-${event.id}`}
             >
               <div className="absolute right-2 top-2 z-10 opacity-0 transition group-hover:opacity-100">
-                <DeleteIconButton onClick={() => onDelete(event)} />
+                <DeleteIconButton onClick={() => onDelete(event)} dataCy={`calendar-side-event-delete-${event.id}`} />
               </div>
               <div className="flex items-start justify-between gap-3">
                 <div className="space-y-1">
@@ -1846,6 +1852,7 @@ export function CalendarPage() {
                   <button
                     type="button"
                     onClick={() => setSelectedEvent(null)}
+                    data-cy="calendar-selected-close"
                     className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground transition hover:bg-muted/80 hover:text-foreground"
                   >
                     ×
