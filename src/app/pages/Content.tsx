@@ -59,6 +59,7 @@ type MetricCard = {
   icon: LucideIcon;
   delta: number;
   onEdit?: () => void;
+  dataCy?: string;
 };
 
 type ContentDraft = {
@@ -278,9 +279,13 @@ function MetricTile({
   detail,
   delta,
   onEdit,
+  dataCy,
 }: MetricCard) {
   return (
-    <div className="rounded-[1.5rem] border border-slate-200/80 bg-white p-5 shadow-[0_12px_28px_rgba(15,23,42,0.05)]">
+    <div
+      className="rounded-[1.5rem] border border-slate-200/80 bg-white p-5 shadow-[0_12px_28px_rgba(15,23,42,0.05)]"
+      data-cy={dataCy}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
           <Icon className="h-5 w-5" />
@@ -832,6 +837,7 @@ export function ContentPage() {
       icon: Eye,
       delta: 0,
       onEdit: openCreateEditor,
+      dataCy: "content-metric-reach",
     },
     {
       id: "engagement",
@@ -841,6 +847,7 @@ export function ContentPage() {
       icon: Users,
       delta: 0,
       onEdit: openCreateEditor,
+      dataCy: "content-metric-engagement",
     },
     {
       id: "published",
@@ -850,6 +857,7 @@ export function ContentPage() {
       icon: FileText,
       delta: 0,
       onEdit: openCreateEditor,
+      dataCy: "content-metric-published",
     },
     {
       id: "goals",
@@ -859,6 +867,7 @@ export function ContentPage() {
       icon: Target,
       delta: 0,
       onEdit: openCreateEditor,
+      dataCy: "content-metric-goals",
     },
   ];
 

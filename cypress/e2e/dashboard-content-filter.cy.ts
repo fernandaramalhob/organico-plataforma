@@ -17,8 +17,8 @@ function readJsonArray<T>(win: Window, key: string): T[] {
   }
 }
 
-describe("Conteúdo - filtro por responsável", () => {
-  it("separa os posts de Hannah e Thiago", () => {
+describe("Conteudo - filtro por responsavel", () => {
+  it("abre a aba de conteudo e filtra os cards por pessoa", () => {
     cy.visit("/", {
       onBeforeLoad(win) {
         win.localStorage.removeItem(authStorageKey);
@@ -29,11 +29,13 @@ describe("Conteúdo - filtro por responsável", () => {
     cy.contains("Entrar na plataforma").should("be.visible");
     cy.get('[data-cy="login-admin-quick-access"]').click();
 
-    cy.get('[data-cy="content-owner-hannah"]').should("be.visible");
-    cy.get('[data-cy="content-owner-thiago"]').should("be.visible");
+    cy.get('[data-cy="nav-content"]').should("be.visible").click();
+    cy.url().should("include", "/content");
+    cy.get('[data-cy="content-page-shell"]').should("be.visible");
 
     cy.window().then((win) => {
       const posts = readJsonArray<{ authorId: number; engagement: number }>(win, postsStorageKey);
+      const format = new Intl.NumberFormat("pt-BR");
 
       const hannahPosts = posts.filter((post) => post.authorId === 2);
       const thiagoPosts = posts.filter((post) => post.authorId === 3);
@@ -41,17 +43,15 @@ describe("Conteúdo - filtro por responsável", () => {
       const hannahEngagement = hannahPosts.reduce((sum, post) => sum + (post.engagement ?? 0), 0);
       const thiagoEngagement = thiagoPosts.reduce((sum, post) => sum + (post.engagement ?? 0), 0);
 
-      cy.get('[data-cy="content-owner-hannah"]').click();
-      cy.get('[data-cy="dashboard-metric-posts"]').should("contain", String(hannahPosts.length));
-      cy.get('[data-cy="dashboard-summary-engagement"]').should("contain", new Intl.NumberFormat("pt-BR").format(hannahEngagement));
-      cy.get('[data-cy="dashboard-top-posts"]').should("contain.text", "Hannah");
-      cy.get('[data-cy="dashboard-top-posts"]').should("not.contain.text", "Thiago");
+      cy.get('[data-cy="content-owner-hannah"]').should("be.visible").click();
+      cy.get('[data-cy="content-main-progress"]').should("contain.text", "Hannah");
+      cy.get('[data-cy="content-metric-published"]').should("contain.text", String(hannahPosts.length));
+      cy.get('[data-cy="content-metric-engagement"]').should("contain.text", format.format(hannahEngagement));
 
       cy.get('[data-cy="content-owner-thiago"]').click();
-      cy.get('[data-cy="dashboard-metric-posts"]').should("contain", String(thiagoPosts.length));
-      cy.get('[data-cy="dashboard-summary-engagement"]').should("contain", new Intl.NumberFormat("pt-BR").format(thiagoEngagement));
-      cy.get('[data-cy="dashboard-top-posts"]').should("contain.text", "Thiago");
-      cy.get('[data-cy="dashboard-top-posts"]').should("not.contain.text", "Hannah");
+      cy.get('[data-cy="content-main-progress"]').should("contain.text", "Thiago");
+      cy.get('[data-cy="content-metric-published"]').should("contain.text", String(thiagoPosts.length));
+      cy.get('[data-cy="content-metric-engagement"]').should("contain.text", format.format(thiagoEngagement));
     });
   });
 });
