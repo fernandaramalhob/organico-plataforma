@@ -1982,6 +1982,7 @@ export function ReportsPage() {
                         key={item.value}
                         type="button"
                         onClick={() => setCustomPeriodMode(item.value)}
+                        data-cy={`reports-custom-mode-${item.value}`}
                         className={cn(
                           "rounded-full px-3 py-2 text-xs font-semibold transition",
                           customPeriodMode === item.value
